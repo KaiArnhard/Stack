@@ -1,37 +1,55 @@
 #include "../include/stack.h"
-#include "../include/debug.h"
 #include <limits.h>
 
-void StackCtor(Stack* stk, size_t capacity, const char* name, const int line, const char* file, const char* function) {
+void StackCtor(Stack* stk, size_t capacity, const char* name, const size_t line, const char* file, const char* function) {
 
     assert(stk);
     stk->data = (elem_t*) calloc(capacity, sizeof(elem_t));
     stk->capacity = capacity;
     stk->size = 0;
-
-    stk->var.file = file;
-    stk->var.function = function;
-    stk->var.name = name;
-    stk->var.line = line;
-
+    stk->var = {name, line, file, function};
+    
     PoisStack(stk);
+    STACK_DUMP(stk);
 }
 
 void StackDtor(Stack* stk) {
     STACK_DUMP(stk);
 
-    PoisStack(stk);
     free(stk->data);
+    PoisStack(stk);
+    stk->data = nullptr;
+    stk->capacity = UINT_MAX;
+    stk->size = UINT_MAX;
+    stk->var = {"alsdjfas", UINT_MAX, "aslkdfjaslkf", "lasdkjfsaklf"};
+    stk = nullptr;
 }
 
-void StackPush(Stack* stk) {
+void PoisStack(Stack* stk) {
+    for (size_t counter = 0; counter < stk->capacity; counter++) {
+        stk->data[counter] = POISON;
+    }
+}
 
+void StackPush(Stack* stk, const elem_t variable) {
+    STACK_DUMP(stk);
+    stk->data[stk->size] = variable;
+    stk->size++;
+    STACK_DUMP(stk);
+}
+
+void StackPop(Stack* stk, elem_t* ptr) {
+    STACK_DUMP(stk);
+    stk->size--;
+    *ptr = stk->data[stk->size];
+    STACK_DUMP(stk);
 }
 
 void StackDump(Stack* stk, const char* file, const char* function, size_t line) {
     
     printf("Stack [%p], %s  from %s line: %d %s \n\n", stk, stk->var.name, stk->var.file, stk->var.line, stk->var.function);
     printf("Called from %s(%d), %s\n", file, line, function);
+    printf("Number of Error %d\n", MyError);
     printf("size = %d, capacity = %d \n", stk->size, stk->capacity);
     printf("data [%p] \n", stk->data);
 
@@ -63,11 +81,10 @@ Errors_t StackVerify(Stack* stk) {
     } else if (stk->capacity == 0 || stk->capacity == UINT_MAX) {
         MyError = STACK_ERROR_CAPACITY_LEQUAL_ZERO;
         return STACK_ERROR_CAPACITY_LEQUAL_ZERO;
-    } else if (stk->size == UINT_MAX){
+    } else if (stk->size == UINT_MAX) {
         MyError = STACK_ERROR_SIZE_LOWER_ZERO;
         return STACK_ERROR_SIZE_LOWER_ZERO;
     }
     
-    
-    return STACK_ERROR_STACK_OVERFLOW;
+    return STACK_NO_ERRORS;
 }

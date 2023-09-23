@@ -4,11 +4,9 @@ int main() {
     Stack stk = {};
     
     STACK_CTOR(&stk);
+    StackPush(&stk, 10);
+    elem_t ptr = 0;
+    StackPop(&stk, &ptr);
+    printf("%d\n", ptr);
     StackDtor(&stk);
-}
-
-void PoisStack(Stack* stk) {
-    for (size_t counter = 0; counter < stk->capacity; counter++) {
-        stk->data[counter] = POISON;
-    }
 }
