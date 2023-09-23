@@ -30,7 +30,6 @@ void StackPush(Stack* stk) {
 
 void StackDump(Stack* stk, const char* file, const char* function, size_t line) {
     
-    assert(stk);
     printf("Stack [%p], %s  from %s line: %d %s \n\n", stk, stk->var.name, stk->var.file, stk->var.line, stk->var.function);
     printf("Called from %s(%d), %s\n", file, line, function);
     printf("size = %d, capacity = %d \n", stk->size, stk->capacity);
@@ -54,9 +53,21 @@ void StackDump(Stack* stk, const char* file, const char* function, size_t line) 
 }
 
 Errors_t StackVerify(Stack* stk) {
+    assert(stk);
     if (stk->data == nullptr) {
         MyError = STACK_ERROR_PTR_TO_DATA_ZERO;
         return STACK_ERROR_PTR_TO_DATA_ZERO;
+    } else if (stk->capacity < stk->size) {
+        MyError = STACK_ERROR_SIZE_OVER_CAPACITY;
+        return STACK_ERROR_SIZE_OVER_CAPACITY;
+    } else if (stk->capacity == 0 || stk->capacity == UINT_MAX) {
+        MyError = STACK_ERROR_CAPACITY_LEQUAL_ZERO;
+        return STACK_ERROR_CAPACITY_LEQUAL_ZERO;
+    } else if (stk->size == UINT_MAX){
+        MyError = STACK_ERROR_SIZE_LOWER_ZERO;
+        return STACK_ERROR_SIZE_LOWER_ZERO;
     }
+    
+    
     return STACK_ERROR_STACK_OVERFLOW;
 }

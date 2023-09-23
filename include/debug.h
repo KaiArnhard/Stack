@@ -23,7 +23,8 @@ Errors_t MyError = STACK_NO_ERRORS;
 
 #define assert(condition)                                                                                                       \
 if(!condition) {                                                                                                                \
-    printf("Error number %d, occurs in FILE %s, function %s, on line %d\n", condition, __FILE__, __PRETTY_FUNCTION__, __LINE__);\
+    printf("Error number %d, occurs in FILE %s, on line %d, function %s\n", condition, __FILE__, __LINE__, __PRETTY_FUNCTION__);\
+    MyError = STACK_ERROR_PTR_TO_STK_ZERO;                                                                                      \
     abort();                                                                                                                    \
     }
 
