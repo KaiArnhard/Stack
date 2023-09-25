@@ -19,7 +19,7 @@ struct DebugVariables
 };
 
 
-struct Stack
+struct stack_t
 {
     elem_t*        data;
     size_t         size;
@@ -43,15 +43,16 @@ if(!condition) {                                                                
     abort();                                                                                                                    \
     }
 
-void StackCtor (Stack* stk, size_t capacity, const char* name, const size_t line, const char* file, const char* function);
-void StackDtor (Stack* stk);
-void PoisStack(Stack* stk);
+static void StackCtor (stack_t* stk, size_t capacity, const char* name, const size_t line, const char* file, const char* function);
+static void StackDtor (stack_t* stk);
+static void PoisStack(stack_t* stk);
 
-void StackPush(Stack* stk, const elem_t variable);
-void StackPop(Stack *stk, elem_t* ptr);
+static void StackPush(stack_t* stk, const elem_t variable);
+static void StackPop(stack_t* stk, elem_t* ptr);
+static void StackResize(stack_t* stk);
 
-void StackDump(Stack* stk, const char* file, const char* function, size_t line);
-Errors_t StackVerify(Stack* stk);
+static void StackDump(stack_t* stk, const char* file, const char* function, size_t line);
+static Errors_t StackVerify(stack_t* stk);
 
 
 #endif

@@ -1,7 +1,7 @@
 #include "../include/stack.h"
 
 int main() {
-    Stack stk = {};
+    stack_t stk = {};
     
     STACK_CTOR(&stk);
     StackPush(&stk, 10);
