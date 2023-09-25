@@ -1,4 +1,5 @@
 #include "../include/stack.h"
+#include "../include/debug.h"
 
 int main() {
     stack_t stk = {};

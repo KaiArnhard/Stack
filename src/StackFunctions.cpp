@@ -1,8 +1,8 @@
 #include "../include/stack.h"
+#include "../include/debug.h"
 #include <limits.h>
 
-static void StackCtor(stack_t* stk, size_t capacity, const char* name, const size_t line, const char* file, const char* function) {
-
+static void StackCtor (stack_t* stk, size_t capacity, const char* name, const size_t line, const char* file, const char* function) {
     assert(stk);
     stk->data = (elem_t*) calloc(capacity, sizeof(elem_t));
     stk->capacity = capacity;
@@ -34,7 +34,8 @@ static void PoisStack(stack_t* stk) {
 static void StackPush(stack_t* stk, const elem_t variable) {
     STACK_DUMP(stk);
     if (stk->size == stk->capacity) {
-        StackResize(stk);
+        CodeOfResize = UP;
+        StackResize(stk, CodeOfResize);
     }
     
     stk->data[stk->size] = variable;
@@ -45,7 +46,8 @@ static void StackPush(stack_t* stk, const elem_t variable) {
 static void StackPop(stack_t* stk, elem_t* ptr) {
     STACK_DUMP(stk);
     if (stk->size <= stk->capacity - (stk->capacity / 5)) {
-        StackResize(stk);
+        CodeOfResize = DOWN;
+        StackResize(stk, CodeOfResize);
     }
     stk->size--;
     *ptr = stk->data[stk->size];
@@ -77,7 +79,7 @@ static void StackDump(stack_t* stk, const char* file, const char* function, size
     abort();
 }
 
-static Errors_t StackVerify(stack_t* stk) {
+Errors_t StackVerify(stack_t* stk) {
     assert(stk);
     if (stk->data == nullptr) {
         MyError | STACK_ERROR_PTR_TO_DATA_ZERO;
@@ -96,6 +98,22 @@ static Errors_t StackVerify(stack_t* stk) {
     return MyError;
 }
 
-static void StackResize(stack_t* stk) {
-    
+static void StackResize(stack_t* stk, size_t ResizeConst) {
+    STACK_DUMP(stk);
+    elem_t* ptr = nullptr;
+    switch (ResizeConst) {
+    case DOWN:
+        ptr = (elem_t*) realloc(stk->data, sizeof(elem_t) * stk->capacity * ResizeConst);
+        assert(ptr);
+        break;
+    case UP:
+        ptr = (elem_t*) realloc(stk->data, sizeof(elem_t) * stk->capacity * ResizeConst);
+        assert(ptr);
+        stk->data = ptr;
+        break;
+    default:
+        abort();
+        break;
+    }
+    STACK_DUMP(stk);
 }
