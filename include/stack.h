@@ -3,9 +3,16 @@
 
 #include <cstdio>
 #include <cstdlib>
-#include "../include/debug.h"
+#include <limits.h>
 
 typedef int elem_t;
+
+static const int ResizeConst = 2;
+
+enum Resize {
+    UP   = 1,
+    DOWN = 0
+};
 
 const size_t DefaultSize = 10;
 const elem_t POISON = *((elem_t*) "POIS");
@@ -25,34 +32,20 @@ struct stack_t
     size_t         size;
     size_t         capacity;
     DebugVariables var;  
+    size_t         OldCapacity;
 };
 
 #define STACK_CTOR(stk) {                                                          \
     StackCtor(stk, DefaultSize, #stk, __LINE__, __FILE__, __PRETTY_FUNCTION__);    \
 }
 
-#define STACK_DUMP(stk)                                                    \
-    if (StackVerify(stk)) {                                                \
-        StackDump(stk, __FILE__, __PRETTY_FUNCTION__, __LINE__);           \
-    }    
+void StackCtor (stack_t* stk, size_t capacity, const char* name, const size_t line, const char* file, const char* function);
+void StackDtor (stack_t* stk);
+void PoisStack(stack_t* stk);
 
-#define assert(condition)                                                                                                       \
-if(!condition) {                                                                                                                \
-    printf("Error number %d, occurs in FILE %s, on line %d, function %s\n", condition, __FILE__, __LINE__, __PRETTY_FUNCTION__);\
-    MyError = STACK_ERROR_PTR_TO_STK_ZERO;                                                                                      \
-    abort();                                                                                                                    \
-    }
-
-static void StackCtor (stack_t* stk, size_t capacity, const char* name, const size_t line, const char* file, const char* function);
-static void StackDtor (stack_t* stk);
-static void PoisStack(stack_t* stk);
-
-static void StackPush(stack_t* stk, const elem_t variable);
-static void StackPop(stack_t* stk, elem_t* ptr);
-static void StackResize(stack_t* stk);
-
-static void StackDump(stack_t* stk, const char* file, const char* function, size_t line);
-static Errors_t StackVerify(stack_t* stk);
+void StackPush(stack_t* stk, const elem_t variable);
+void StackPop(stack_t* stk, elem_t* ptr);
+size_t StackResize(stack_t* stk, bool CodeOfResize);
 
 
 #endif

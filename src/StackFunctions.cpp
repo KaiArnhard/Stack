@@ -1,23 +1,23 @@
 #include "../include/stack.h"
 #include "../include/debug.h"
-#include <limits.h>
 
-static void StackCtor (stack_t* stk, size_t capacity, const char* name, const size_t line, const char* file, const char* function) {
+void StackCtor (stack_t* stk, size_t capacity, const char* name, const size_t line, const char* file, const char* function) {
     assert(stk);
     stk->data = (elem_t*) calloc(capacity, sizeof(elem_t));
     stk->capacity = capacity;
     stk->size = 0;
+    stk->OldCapacity = 0;
     stk->var = {name, line, file, function};
     
     PoisStack(stk);
     STACK_DUMP(stk);
 }
 
-static void StackDtor(stack_t* stk) {
+void StackDtor(stack_t* stk) {
     STACK_DUMP(stk);
 
-    free(stk->data);
     PoisStack(stk);
+    free(stk->data);
     stk->data = nullptr;
     stk->capacity = UINT_MAX;
     stk->size = UINT_MAX;
@@ -25,36 +25,62 @@ static void StackDtor(stack_t* stk) {
     stk = nullptr;
 }
 
-static void PoisStack(stack_t* stk) {
+void PoisStack(stack_t* stk) {
     for (size_t counter = 0; counter < stk->capacity; counter++) {
         stk->data[counter] = POISON;
     }
 }
 
-static void StackPush(stack_t* stk, const elem_t variable) {
+void StackPush(stack_t* stk, const elem_t variable) {
     STACK_DUMP(stk);
-    if (stk->size == stk->capacity) {
-        CodeOfResize = UP;
-        StackResize(stk, CodeOfResize);
+    if (stk->size + 1 == stk->capacity) {
+        stk->OldCapacity = StackResize(stk, UP);
     }
     
     stk->data[stk->size] = variable;
     stk->size++;
+    printf("%d\n", stk->size);
     STACK_DUMP(stk);
 }
 
-static void StackPop(stack_t* stk, elem_t* ptr) {
+void StackPop(stack_t* stk, elem_t* ptr) {
     STACK_DUMP(stk);
-    if (stk->size <= stk->capacity - (stk->capacity / 5)) {
-        CodeOfResize = DOWN;
-        StackResize(stk, CodeOfResize);
+    if (stk->OldCapacity != 0 && stk->size <= stk->OldCapacity - 3) {
+        stk->OldCapacity = StackResize(stk, DOWN);
     }
     stk->size--;
     *ptr = stk->data[stk->size];
+    stk->data[stk->size] = POISON;
     STACK_DUMP(stk);
 }
 
-static void StackDump(stack_t* stk, const char* file, const char* function, size_t line) {
+size_t StackResize(stack_t* stk, bool CodeOfResize) {
+    STACK_DUMP(stk);
+    elem_t* ptr = nullptr;
+    size_t OldCapacity = 0;
+    switch (CodeOfResize) {
+    case DOWN:
+        ptr = (elem_t*) realloc(stk->data, sizeof(elem_t) * stk->OldCapacity);
+        assert(ptr);
+        stk->data = ptr;
+        stk->capacity = stk->OldCapacity;
+        break;
+    case UP:
+        OldCapacity = stk->capacity;
+        stk->capacity *= ResizeConst;
+        ptr = (elem_t*) realloc(stk->data, sizeof(elem_t) * stk->capacity);
+        assert(ptr);
+        stk->data = ptr;
+        break;
+    default:
+        abort();
+        break;
+    }
+    STACK_DUMP(stk);
+    return OldCapacity;
+}
+
+void StackDump(stack_t* stk, const char* file, const char* function, size_t line) {
     
     printf("Stack [%p], %s  from %s line: %d %s \n\n", stk, stk->var.name, stk->var.file, stk->var.line, stk->var.function);
     printf("Called from %s(%d), %s\n", file, line, function);
@@ -64,7 +90,7 @@ static void StackDump(stack_t* stk, const char* file, const char* function, size
 
     if (stk->capacity != UINT_MAX && stk->data != nullptr) {
         size_t counter = 0;
-        for (; counter < stk->size; counter++) {
+        for (; counter < stk->size && counter < stk->capacity; counter++) {
             printf("[%d] = %d \n", counter, stk->data[counter]);
         }
         for (; counter < stk->capacity; counter++) {
@@ -74,46 +100,30 @@ static void StackDump(stack_t* stk, const char* file, const char* function, size
             }
             printf("\n");
         }
+    } else if (stk->size != __UINT32_MAX__){
+        for (size_t counter = 0; counter < stk->size; counter++) {
+            printf("[%d] = %d \n", counter, stk->data[counter]);
+        }
     }
+    
     
     abort();
 }
 
-Errors_t StackVerify(stack_t* stk) {
+size_t StackVerify(stack_t* stk) {
     assert(stk);
     if (stk->data == nullptr) {
-        MyError | STACK_ERROR_PTR_TO_DATA_ZERO;
+        MyError = MyError | STACK_ERROR_PTR_TO_DATA_ZERO;
     } if (stk->capacity < stk->size) {
-        MyError | STACK_ERROR_SIZE_OVER_CAPACITY;
-    } if (stk->capacity == 0 || stk->capacity == UINT_MAX) {
-        MyError | STACK_ERROR_CAPACITY_LEQUAL_ZERO;
-    } if (stk->size == UINT_MAX) {
-        MyError | STACK_ERROR_SIZE_LOWER_ZERO;
-    } if (stk->size == UINT_MAX) {
-        MyError | STACK_ERROR_SIZE_LOWER_ZERO;
+        MyError = MyError | STACK_ERROR_SIZE_OVER_CAPACITY;
+    } if (stk->capacity == __UINT32_MAX__) {
+        MyError = MyError | STACK_ERROR_CAPACITY_LOWER_ZERO;
+    } if (stk->capacity == 0) {
+        MyError | STACK_ERROR_CAPACITY_EQUAL_ZERO;
+    } if (stk->size == __UINT32_MAX__) {
+        MyError = MyError | STACK_ERROR_SIZE_LOWER_ZERO;
     } if (stk->capacity < DefaultSize) {
-        MyError | STACK_ERROR_CAPACITY_LOWER_DEFAULT;
+        MyError = MyError | STACK_ERROR_CAPACITY_LOWER_DEFAULT;
     }
-       
     return MyError;
-}
-
-static void StackResize(stack_t* stk, size_t ResizeConst) {
-    STACK_DUMP(stk);
-    elem_t* ptr = nullptr;
-    switch (ResizeConst) {
-    case DOWN:
-        ptr = (elem_t*) realloc(stk->data, sizeof(elem_t) * stk->capacity * ResizeConst);
-        assert(ptr);
-        break;
-    case UP:
-        ptr = (elem_t*) realloc(stk->data, sizeof(elem_t) * stk->capacity * ResizeConst);
-        assert(ptr);
-        stk->data = ptr;
-        break;
-    default:
-        abort();
-        break;
-    }
-    STACK_DUMP(stk);
 }

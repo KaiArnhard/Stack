@@ -3,11 +3,16 @@
 
 int main() {
     stack_t stk = {};
-    
-    STACK_CTOR(&stk);
-    StackPush(&stk, 10);
     elem_t ptr = 0;
-    StackPop(&stk, &ptr);
-    printf("%d\n", ptr);
+
+    STACK_CTOR(&stk);
+    for (size_t i = 0; i < 11; i++) {
+        StackPush(&stk, 10);
+    }
+    printf("capacity %d \n", stk.capacity);
+    for (size_t i = 0; i < 12; i++) {
+        StackPop(&stk, &ptr);
+    }
+    printf("capacity %d \n", stk.capacity);
     StackDtor(&stk);
 }
