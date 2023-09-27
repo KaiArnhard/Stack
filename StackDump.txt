@@ -1,16 +1,16 @@
-Stack [0x7ffca36cb140], &stk  from main.cpp line: 7 int main() 
+Stack [0x7fffbe3f91a0], &stk  from main.cpp line: 7 int main() 
 
-Called from StackFunctions.cpp(60), void StackPop(stack_t*, elem_t*)
-Number of Error 8
-size = -1, capacity = 10 
-data [0x55b9466b7660] 
-[0] = 1397313360 
-[1] = 1397313360 
-[2] = 1397313360 
-[3] = 1397313360 
-[4] = 1397313360 
-[5] = 1397313360 
-[6] = 1397313360 
-[7] = 1397313360 
-[8] = 1397313360 
-[9] = 1397313360 
+Called from StackFunctions.cpp(21), void StackCtor(stack_t*, size_t, const char*, size_t, const char*, const char*)
+Error number 1
+size = 0, capacity = 10 
+data [0x558fad998660] 
+[0] = POIS
+[1] = POIS
+[2] = POIS
+[3] = POIS
+[4] = POIS
+[5] = POIS
+[6] = POIS
+[7] = POIS
+[8] = POIS
+[9] = POIS

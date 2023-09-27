@@ -7,7 +7,7 @@ void StackCtor (stack_t* stk, size_t capacity, const char* name, const size_t li
         ptr = (char* ) calloc(capacity * sizeof(elem_t) + 2 * sizeof(canary_t), sizeof(char));
         assert(ptr);
         stk->data = (elem_t*) (ptr + sizeof(canary_t));
-        
+
     #else
         stk->data = (elem_t*) calloc(capacity, sizeof(elem_t));
         
@@ -31,10 +31,11 @@ void StackDtor(stack_t* stk) {
     stk->size = UINT_MAX;
     stk->var = {"alsdjfas", UINT_MAX, "aslkdfjaslkf", "lasdkjfsaklf"};
     stk = nullptr;
+    fclose(PointerToDump);
 }
 
 void PoisStack(stack_t* stk) {
-    for (size_t counter = 0; counter < stk->capacity; counter++) {
+    for (size_t counter = stk->size; counter < stk->capacity; counter++) {
         stk->data[counter] = POISON;
     }
 }
@@ -70,6 +71,7 @@ size_t StackResize(stack_t* stk, bool CodeOfResize) {
         ptr = (elem_t*) realloc(stk->data, sizeof(elem_t) * stk->OldCapacity);
         assert(ptr);
         stk->data = ptr;
+        PoisStack(stk);
         stk->capacity = stk->OldCapacity;
         break;
     case UP:
@@ -136,5 +138,6 @@ size_t StackVerify(stack_t* stk) {
     } if (stk->capacity < DefaultSize) {
         MyError |= STACK_ERROR_CAPACITY_LOWER_DEFAULT;
     }
+    MyError = STACK_ERROR_STACK_OVERFLOW;
     return MyError;
 }
