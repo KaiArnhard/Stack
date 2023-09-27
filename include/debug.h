@@ -3,7 +3,7 @@
     
 typedef unsigned long long canary_t;
 
-static const char* NameOfDump = "StackDump.txt";
+static const char* NameOfDump = "../StackDump.txt";
 
 enum Errors_t {
     STACK_NO_ERRORS                    = 0,
@@ -25,16 +25,16 @@ enum Errors_t {
 
 static size_t MyError = STACK_NO_ERRORS;
 
-#define STACK_DUMP(stk)                                                    \
-    if (StackVerify(stk)) {                                                \
-        StackDump(stk, __FILE__, __PRETTY_FUNCTION__, __LINE__);           \
+#define STACK_DUMP(stk)                                          \
+    if (StackVerify(stk)) {                                      \
+        StackDump(stk, __FILE__, __PRETTY_FUNCTION__, __LINE__); \
     }    
 
-#define assert(condition)                                                                                                       \
-if(!condition) {                                                                                                                \
-    printf("Error number %d, occurs in FILE %s, on line %d, function %s\n", condition, __FILE__, __LINE__, __PRETTY_FUNCTION__);\
-    MyError | STACK_ERROR_PTR_TO_STK_ZERO;                                                                                      \
-    abort();                                                                                                                    \
+#define assert(condition)                                                                                                        \
+if(!condition) {                                                                                                                 \
+    printf("Error number %d, occurs in FILE %s, on line %d, function %s\n", condition, __FILE__, __LINE__, __PRETTY_FUNCTION__); \
+    MyError | STACK_ERROR_PTR_TO_STK_ZERO;                                                                                       \
+    abort();                                                                                                                     \
     }
 
 

@@ -88,9 +88,7 @@ size_t StackResize(stack_t* stk, bool CodeOfResize) {
 }
 
 void StackDump(stack_t* stk, const char* file, const char* function, size_t line) {
-    
-    FILE* fp = nullptr;
-    fp = fopen(NameOfDump, "w");
+    FILE* fp = fopen(NameOfDump, "w");
 
     fprintf(fp, "Stack [%p], %s  from %s line: %d %s \n\n", stk, stk->var.name, stk->var.file, stk->var.line, stk->var.function);
     fprintf(fp, "Called from %s(%d), %s\n", file, line, function);
