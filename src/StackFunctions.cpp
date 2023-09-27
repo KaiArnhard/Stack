@@ -39,7 +39,6 @@ void StackPush(stack_t* stk, const elem_t variable) {
     
     stk->data[stk->size] = variable;
     stk->size++;
-    printf("%d\n", stk->size);
     STACK_DUMP(stk);
 }
 

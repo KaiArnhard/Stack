@@ -1,7 +1,16 @@
 #ifndef DEBUG_H
 #define DEBUG_H
 
+#define CANARY_PROT
+
 #include "stack.h"
+
+#if defined(CANARY_PROT)
+    typedef unsigned long long canary_t;
+
+
+#endif // CANARY_PROT
+
 
 enum Errors_t {
     STACK_NO_ERRORS                    = 0,
