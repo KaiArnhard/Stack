@@ -1,7 +1,5 @@
 #ifndef DEBUG_H
 #define DEBUG_H
-
-#include "stack.h"
     
 typedef unsigned long long canary_t;
 
@@ -39,8 +37,5 @@ if(!condition) {                                                                
     abort();                                                                                                                    \
     }
 
-void StackDump(stack_t* stk, const char* file, const char* function, size_t line);
-size_t StackVerify(stack_t* stk);
-void PrintOfPoison(stack_t* stk, size_t counter, FILE* fp);
 
 #endif

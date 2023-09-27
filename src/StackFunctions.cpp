@@ -115,7 +115,6 @@ void StackDump(stack_t* stk, const char* file, const char* function, size_t line
         }
     }
     
-    
     abort();
 }
 
