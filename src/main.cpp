@@ -12,6 +12,6 @@ int main() {
     for (size_t i = 0; i < 12; i++) {
         StackPop(&stk, &ptr);
     }
-    stk.size = __UINT32_MAX__;
+    stk.capacity = -1;
     StackDtor(&stk);
 }
