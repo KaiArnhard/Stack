@@ -8,22 +8,17 @@ void StackCtor (stack_t* stk, size_t capacity, const char* name, const size_t li
         ptr = (char* ) calloc(capacity * sizeof(elem_t) + 2 * sizeof(canary_t), sizeof(char));
         assert(ptr);
         stk->data = (elem_t*) (ptr + sizeof(canary_t));
-        stk->capacity = capacity;
-        stk->OldCapacity = 0;
-        stk->size = 0;
-        stk->var = {name, line, file, function};
-        PoisStack(stk);
-        STACK_DUMP(stk);
     #else
         stk->data = (elem_t*) calloc(capacity, sizeof(elem_t));
-        stk->capacity = capacity;
-        stk->size = 0;
-        stk->OldCapacity = 0;
-        stk->var = {name, line, file, function};
         
-        PoisStack(stk);
-        STACK_DUMP(stk);
     #endif // CANARY_PROT
+    stk->capacity = capacity;
+    stk->size = 0;
+    stk->OldCapacity = 0;
+    stk->var = {name, line, file, function};
+    
+    PoisStack(stk);
+    STACK_DUMP(stk);
 }
 
 void StackDtor(stack_t* stk) {
