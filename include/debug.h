@@ -3,7 +3,7 @@
     
 typedef unsigned long long canary_t;
 
-static const char* NameOfDump = "../StackDump.txt";
+static const char* NameOfDump = "StackDump.txt";
 
 enum Errors_t {
     STACK_NO_ERRORS                    = 0,
@@ -15,8 +15,8 @@ enum Errors_t {
     STACK_ERROR_CAPACITY_LOWER_ZERO    = 32,
     STACK_ERROR_CAPACITY_EQUAL_ZERO    = 64,
     STACK_ERROR_CAPACITY_LOWER_DEFAULT = 128,
-    #if defined(CANARY_PROT)
     
+    #if defined(CANARY_PROT)
         STACK_ERROR_LEFT_CANARY_DIED       = 256,
         STACK_ERROR_RIGHT_CANARY_DIED      = 512,
     #endif // CANARY_PROT

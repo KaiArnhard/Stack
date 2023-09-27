@@ -37,7 +37,7 @@ struct stack_t {
     size_t         OldCapacity;
 
     #if defined(CANARY_PROT)
-        canary_t CanaryLeft = 0xBADC0FFEE;
+        canary_t CanaryRight = 0xBADC0FFEE;
     #endif //RIGHT_CANARY_PROT
 };
 

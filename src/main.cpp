@@ -9,7 +9,6 @@ int main() {
     for (size_t i = 0; i < 11; i++) {
         StackPush(&stk, 10);
     }
-    printf("capacity %d \n", stk.capacity);
     for (size_t i = 0; i < 12; i++) {
         StackPop(&stk, &ptr);
     }
