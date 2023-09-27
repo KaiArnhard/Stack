@@ -30,11 +30,11 @@ static size_t MyError = STACK_NO_ERRORS;
         StackDump(stk, __FILE__, __PRETTY_FUNCTION__, __LINE__); \
     }    
 
-#define assert(condition)                                                                                                                        \
-if(!condition) {                                                                                                                                 \
-    fprintf(PointerToDump, "Error number %d, occurs in FILE %s, on line %d, function %s\n", condition, __FILE__, __LINE__, __PRETTY_FUNCTION__); \
-    MyError | STACK_ERROR_PTR_TO_STK_ZERO;                                                                                                       \
-    abort();                                                                                                                                     \
-    }
+#define assert(condition)                                                                                                                      \
+if(!condition) {                                                                                                                               \
+    MyError |= STACK_ERROR_PTR_TO_STK_ZERO;                                                                                                    \
+    fprintf(PointerToDump, "Error number %d, occurs in FILE %s, on line %d, function %s\n", MyError, __FILE__, __LINE__, __PRETTY_FUNCTION__); \
+    exit(-1);                                                                                                                                  \
+}
 
 #endif

@@ -1,5 +1,4 @@
 #include "../include/stack.h"
-#include "../include/debug.h"
 
 void StackCtor (stack_t* stk, size_t capacity, const char* name, const size_t line, const char* file, const char* function) {
     assert(stk);
@@ -8,6 +7,7 @@ void StackCtor (stack_t* stk, size_t capacity, const char* name, const size_t li
         ptr = (char* ) calloc(capacity * sizeof(elem_t) + 2 * sizeof(canary_t), sizeof(char));
         assert(ptr);
         stk->data = (elem_t*) (ptr + sizeof(canary_t));
+        
     #else
         stk->data = (elem_t*) calloc(capacity, sizeof(elem_t));
         
@@ -91,7 +91,7 @@ void StackDump(stack_t* stk, const char* file, const char* function, size_t line
     
     fprintf(PointerToDump, "Stack [%p], %s  from %s line: %d %s \n\n", stk, stk->var.name, stk->var.file, stk->var.line, stk->var.function);
     fprintf(PointerToDump, "Called from %s(%d), %s\n", file, line, function);
-    fprintf(PointerToDump, "Number of Error %d\n", MyError);
+    fprintf(PointerToDump, "Error number %d\n", MyError);
     fprintf(PointerToDump, "size = %d, capacity = %d \n", stk->size, stk->capacity);
     fprintf(PointerToDump, "data [%p] \n", stk->data);
 
@@ -108,7 +108,7 @@ void StackDump(stack_t* stk, const char* file, const char* function, size_t line
         }
     }
     
-    abort();
+    exit(-1);
 }
 
 void PrintOfPoison(stack_t* stk, size_t counter, FILE* fp) {
@@ -124,17 +124,17 @@ void PrintOfPoison(stack_t* stk, size_t counter, FILE* fp) {
 size_t StackVerify(stack_t* stk) {
     assert(stk);
     if (stk->data == nullptr) {
-        MyError = MyError | STACK_ERROR_PTR_TO_DATA_ZERO;
+        MyError |= STACK_ERROR_PTR_TO_DATA_ZERO;
     } if (stk->capacity < stk->size) {
-        MyError = MyError | STACK_ERROR_SIZE_OVER_CAPACITY;
+        MyError |= STACK_ERROR_SIZE_OVER_CAPACITY;
     } if (stk->capacity == __UINT32_MAX__) {
-        MyError = MyError | STACK_ERROR_CAPACITY_LOWER_ZERO;
+        MyError |= STACK_ERROR_CAPACITY_LOWER_ZERO;
     } if (stk->capacity == 0) {
-        MyError | STACK_ERROR_CAPACITY_EQUAL_ZERO;
+        MyError |= STACK_ERROR_CAPACITY_EQUAL_ZERO;
     } if (stk->size == __UINT32_MAX__) {
-        MyError = MyError | STACK_ERROR_SIZE_LOWER_ZERO;
+        MyError |= STACK_ERROR_SIZE_LOWER_ZERO;
     } if (stk->capacity < DefaultSize) {
-        MyError = MyError | STACK_ERROR_CAPACITY_LOWER_DEFAULT;
+        MyError |= STACK_ERROR_CAPACITY_LOWER_DEFAULT;
     }
     return MyError;
 }

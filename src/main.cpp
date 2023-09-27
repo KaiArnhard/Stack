@@ -1,5 +1,4 @@
 #include "../include/stack.h"
-#include "../include/debug.h"
 
 int main() {
     stack_t stk = {};
@@ -9,9 +8,8 @@ int main() {
     for (size_t i = 0; i < 11; i++) {
         StackPush(&stk, 10);
     }
-    for (size_t i = 0; i < 12; i++) {
+    for (size_t i = 0; i < 9; i++) {
         StackPop(&stk, &ptr);
     }
-    stk.capacity = -1;
     StackDtor(&stk);
 }
