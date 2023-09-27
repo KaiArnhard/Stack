@@ -1,16 +1,11 @@
 #ifndef DEBUG_H
 #define DEBUG_H
 
-#define CANARY_PROT
-
 #include "stack.h"
+    
+typedef unsigned long long canary_t;
 
-#if defined(CANARY_PROT)
-    typedef unsigned long long canary_t;
-
-
-#endif // CANARY_PROT
-
+static const char* NameOfDump = "../StackDump.txt";
 
 enum Errors_t {
     STACK_NO_ERRORS                    = 0,
@@ -21,7 +16,13 @@ enum Errors_t {
     STACK_ERROR_SIZE_LOWER_ZERO        = 16,
     STACK_ERROR_CAPACITY_LOWER_ZERO    = 32,
     STACK_ERROR_CAPACITY_EQUAL_ZERO    = 64,
-    STACK_ERROR_CAPACITY_LOWER_DEFAULT = 128
+    STACK_ERROR_CAPACITY_LOWER_DEFAULT = 128,
+    #if defined(CANARY_PROT)
+    
+        STACK_ERROR_LEFT_CANARY_DIED       = 256,
+        STACK_ERROR_RIGHT_CANARY_DIED      = 512,
+    #endif // CANARY_PROT
+    
 };
 
 static size_t MyError = STACK_NO_ERRORS;
@@ -40,5 +41,6 @@ if(!condition) {                                                                
 
 void StackDump(stack_t* stk, const char* file, const char* function, size_t line);
 size_t StackVerify(stack_t* stk);
+void PrintOfPoison(stack_t* stk, size_t counter, FILE* fp);
 
 #endif

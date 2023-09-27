@@ -3,14 +3,27 @@
 
 void StackCtor (stack_t* stk, size_t capacity, const char* name, const size_t line, const char* file, const char* function) {
     assert(stk);
-    stk->data = (elem_t*) calloc(capacity, sizeof(elem_t));
-    stk->capacity = capacity;
-    stk->size = 0;
-    stk->OldCapacity = 0;
-    stk->var = {name, line, file, function};
-    
-    PoisStack(stk);
-    STACK_DUMP(stk);
+    #if defined(CANARY_PROT)
+        char* ptr = nullptr;
+        ptr = (char* ) calloc(capacity * sizeof(elem_t) + 2 * sizeof(canary_t), sizeof(char));
+        assert(ptr);
+        stk->data = (elem_t*) (ptr + sizeof(canary_t));
+        stk->capacity = capacity;
+        stk->OldCapacity = 0;
+        stk->size = 0;
+        stk->var = {name, line, file, function};
+        PoisStack(stk);
+        STACK_DUMP(stk);
+    #else
+        stk->data = (elem_t*) calloc(capacity, sizeof(elem_t));
+        stk->capacity = capacity;
+        stk->size = 0;
+        stk->OldCapacity = 0;
+        stk->var = {name, line, file, function};
+        
+        PoisStack(stk);
+        STACK_DUMP(stk);
+    #endif // CANARY_PROT
 }
 
 void StackDtor(stack_t* stk) {
@@ -81,32 +94,39 @@ size_t StackResize(stack_t* stk, bool CodeOfResize) {
 
 void StackDump(stack_t* stk, const char* file, const char* function, size_t line) {
     
-    printf("Stack [%p], %s  from %s line: %d %s \n\n", stk, stk->var.name, stk->var.file, stk->var.line, stk->var.function);
-    printf("Called from %s(%d), %s\n", file, line, function);
-    printf("Number of Error %d\n", MyError);
-    printf("size = %d, capacity = %d \n", stk->size, stk->capacity);
-    printf("data [%p] \n", stk->data);
+    FILE* fp = fopen(NameOfDump, "w");
+
+    fprintf(fp, "Stack [%p], %s  from %s line: %d %s \n\n", stk, stk->var.name, stk->var.file, stk->var.line, stk->var.function);
+    fprintf(fp, "Called from %s(%d), %s\n", file, line, function);
+    fprintf(fp, "Number of Error %d\n", MyError);
+    fprintf(fp, "size = %d, capacity = %d \n", stk->size, stk->capacity);
+    fprintf(fp, "data [%p] \n", stk->data);
 
     if (stk->capacity != UINT_MAX && stk->data != nullptr) {
         size_t counter = 0;
         for (; counter < stk->size && counter < stk->capacity; counter++) {
-            printf("[%d] = %d \n", counter, stk->data[counter]);
+            fprintf(fp, "[%d] = %d \n", counter, stk->data[counter]);
         }
-        for (; counter < stk->capacity; counter++) {
-            printf("[%d] = ", counter);
-            for (size_t i = 0; i < 4; i++) {
-                putchar(*((char*) (stk->data + counter) + i));
-            }
-            printf("\n");
-        }
+        PrintOfPoison(stk, counter, fp);
+    
     } else if (stk->size != __UINT32_MAX__){
         for (size_t counter = 0; counter < stk->size; counter++) {
-            printf("[%d] = %d \n", counter, stk->data[counter]);
+            fprintf(fp, "[%d] = %d \n", counter, stk->data[counter]);
         }
     }
     
     
     abort();
+}
+
+void PrintOfPoison(stack_t* stk, size_t counter, FILE* fp) {
+    for (; counter < stk->capacity; counter++) {
+            fprintf(fp, "[%d] = ", counter);
+            for (size_t i = 0; i < 4; i++) {
+                fputc(*((char*) (stk->data + counter) + i), fp);
+            }
+            fprintf(fp, "\n");
+        }
 }
 
 size_t StackVerify(stack_t* stk) {

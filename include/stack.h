@@ -4,6 +4,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <limits.h>
+#include "debug.h"
 
 typedef int elem_t;
 
@@ -25,15 +26,27 @@ struct DebugVariables
     const char*  function;
 };
 
-
-struct stack_t
-{
-    elem_t*        data;
-    size_t         size;
-    size_t         capacity;
-    DebugVariables var;  
-    size_t         OldCapacity;
-};
+#if defined(CANARY_PROT)
+    struct stack_t {
+        canary_t LEFT_CANARY = 0xDED320BED;
+        elem_t*        data;
+        size_t         size;
+        size_t         capacity;
+        DebugVariables var;  
+        size_t         OldCapacity;
+        canary_t RIGHT_CANARY = 0xD;
+    };
+#else
+    struct stack_t {
+        elem_t*        data;
+        size_t         size;
+        size_t         capacity;
+        DebugVariables var;  
+        size_t         OldCapacity;
+        
+    };
+    
+#endif // CANARY_PROT
 
 #define STACK_CTOR(stk) {                                                          \
     StackCtor(stk, DefaultSize, #stk, __LINE__, __FILE__, __PRETTY_FUNCTION__);    \

@@ -13,6 +13,6 @@ int main() {
     for (size_t i = 0; i < 12; i++) {
         StackPop(&stk, &ptr);
     }
-    printf("capacity %d \n", stk.capacity);
+    stk.size = __UINT32_MAX__;
     StackDtor(&stk);
 }
