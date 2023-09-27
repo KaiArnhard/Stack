@@ -18,11 +18,11 @@ void StackCtor (stack_t* stk, size_t capacity, const char* name, const size_t li
     stk->var = {name, line, file, function};
     
     PoisStack(stk);
-    STACK_DUMP(stk);
+    STACK_CHECK(stk);
 }
 
 void StackDtor(stack_t* stk) {
-    STACK_DUMP(stk);
+    STACK_CHECK(stk);
 
     PoisStack(stk);
     free(stk->data);
@@ -41,29 +41,29 @@ void PoisStack(stack_t* stk) {
 }
 
 void StackPush(stack_t* stk, const elem_t variable) {
-    STACK_DUMP(stk);
+    STACK_CHECK(stk);
     if (stk->size + 1 == stk->capacity) {
         stk->OldCapacity = StackResize(stk, UP);
     }
     
     stk->data[stk->size] = variable;
     stk->size++;
-    STACK_DUMP(stk);
+    STACK_CHECK(stk);
 }
 
 void StackPop(stack_t* stk, elem_t* ptr) {
-    STACK_DUMP(stk);
+    STACK_CHECK(stk);
     if (stk->OldCapacity != 0 && stk->size <= stk->OldCapacity - 3) {
         stk->OldCapacity = StackResize(stk, DOWN);
     }
     stk->size--;
     *ptr = stk->data[stk->size];
     stk->data[stk->size] = POISON;
-    STACK_DUMP(stk);
+    STACK_CHECK(stk);
 }
 
 size_t StackResize(stack_t* stk, bool CodeOfResize) {
-    STACK_DUMP(stk);
+    STACK_CHECK(stk);
     elem_t* ptr = nullptr;
     size_t OldCapacity = 0;
     switch (CodeOfResize) {
@@ -85,7 +85,7 @@ size_t StackResize(stack_t* stk, bool CodeOfResize) {
         abort();
         break;
     }
-    STACK_DUMP(stk);
+    STACK_CHECK(stk);
     return OldCapacity;
 }
 
