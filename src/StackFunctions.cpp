@@ -20,6 +20,10 @@ void StackCtor (stack_t* stk, size_t capacity, const char* name, const size_t li
     #else
         stk->data = (elem_t*) calloc(capacity, sizeof(elem_t));   
     #endif // CANARY_PROT
+    #if defined(HASH_PROT)
+        stk->hash = 0;
+    #endif // HASH_PROT
+    
     stk->capacity = capacity;
     stk->size = 0;
     stk->OldCapacity = 0;
@@ -33,7 +37,6 @@ void StackDtor(stack_t* stk) {
     STACK_CHECK(stk);
 
     #if defined(CANARY_PROT)
-    
         PoisStack(stk);
         free(((char*)stk->data - sizeof(canary_t)));
     #else
@@ -85,11 +88,12 @@ size_t StackResize(stack_t* stk, bool CodeOfResize) {
     #if defined(CANARY_PROT)
         switch (CodeOfResize) {
             case DOWN:
-                ptr = (char*) realloc(((char*) stk->data) - sizeof(canary_t), sizeof(elem_t) * stk->OldCapacity + 2 * sizeof(canary_t));
+                ptr = (char*) stk->data - sizeof(canary_t);
+                ptr = (char*) realloc(ptr, sizeof(elem_t) * stk->OldCapacity + 2 * sizeof(canary_t));
                 assert(ptr);
                 stk->data = (elem_t*) (ptr + sizeof(canary_t));
-                PoisStack(stk);
                 stk->capacity = stk->OldCapacity;
+                ((canary_t *) (stk->data + stk->capacity))[0] = stk->RightCanary;
                 break;
             case UP:
                 OldCapacity = stk->capacity;
@@ -97,6 +101,8 @@ size_t StackResize(stack_t* stk, bool CodeOfResize) {
                 ptr = (char*) realloc(((char*) stk->data) - sizeof(canary_t), sizeof(elem_t) * stk->capacity + 2 * sizeof(canary_t));
                 assert(ptr);
                 stk->data = (elem_t*) (ptr + sizeof(canary_t));
+                ((canary_t *) (stk->data + stk->capacity))[0] = stk->RightCanary;
+                PoisStack(stk);
                 break;
             default:
                 abort();
@@ -108,8 +114,8 @@ size_t StackResize(stack_t* stk, bool CodeOfResize) {
             ptr = (char*) realloc(stk->data, sizeof(elem_t) * stk->OldCapacity);
             assert(ptr);
             stk->data = (elem_t*) ptr;
-            PoisStack(stk);
             stk->capacity = stk->OldCapacity;
+            printf("dbg\n");
             break;
         case UP:
             OldCapacity = stk->capacity;
@@ -117,8 +123,10 @@ size_t StackResize(stack_t* stk, bool CodeOfResize) {
             ptr = (char*) realloc(stk->data, sizeof(elem_t) * stk->capacity);
             assert(ptr);
             stk->data = (elem_t*) ptr;
+            printf("dbg\n");
             break;
         default:
+            printf("dbg\n");
             abort();
             break;
         }
@@ -141,11 +149,15 @@ void StackDump(stack_t* stk, const char* file, const char* function, size_t line
     fprintf(PointerToDump, "Called from %s(%d), %s\n", file, line, function);
     fprintf(PointerToDump, "Error numbers \n");
     size_t Error[11] = {};
+    #if defined(HASH_PROT)
+        fprintf(PointerToDump, "Stack hash %d\n", stk->hash);
+    #endif // HASH_PROT
+    
     ErrorDecoder(Error);
     fprintf(PointerToDump, "size = %d, capacity = %d \n", stk->size, stk->capacity);
     fprintf(PointerToDump, "data [%p] \n", stk->data);
 
-    if (Error[1]) {
+    if (Error[1] || Error[3] || Error[4]) {
         exit(-1);
     }
     
@@ -157,70 +169,6 @@ void StackDump(stack_t* stk, const char* file, const char* function, size_t line
         for (size_t counter = 0; counter < stk->size; counter++) {
             fprintf(PointerToDump, "[%d] = %d \n", counter, stk->data[counter]);
         }
-    }
-}
-
-void ErrorDecoder(size_t* Error) {
-    if (MyErrorno & STACK_ERROR_STACK_OVERFLOW) {                  
-        Error[0] = STACK_ERROR_STACK_OVERFLOW;
-        fprintf(PointerToDump, "%d ", Error[0]);
-    
-    } if (MyErrorno & STACK_ERROR_PTR_TO_DATA_ZERO) {
-        Error[1] = STACK_ERROR_PTR_TO_DATA_ZERO;
-        fprintf(PointerToDump, "%d ", Error[1]);
-    
-    } if (MyErrorno & STACK_ERROR_SIZE_OVER_CAPACITY) {
-        Error[2] = STACK_ERROR_SIZE_OVER_CAPACITY;
-        fprintf(PointerToDump, "%d ", Error[2]);
-    
-    } if (MyErrorno & STACK_ERROR_SIZE_LOWER_ZERO) {
-        Error[3] = STACK_ERROR_SIZE_LOWER_ZERO;
-        fprintf(PointerToDump, "%d ", Error[3]);
-    
-    } if (MyErrorno & STACK_ERROR_CAPACITY_LOWER_ZERO) {
-        Error[4] = STACK_ERROR_CAPACITY_LOWER_ZERO;
-        fprintf(PointerToDump, "%d ", Error[4]); 
-    
-    } if (MyErrorno & STACK_ERROR_CAPACITY_EQUAL_ZERO) {
-        Error[5] = STACK_ERROR_CAPACITY_EQUAL_ZERO;
-        fprintf(PointerToDump, "%d ", Error[5]);
-    
-    } if (MyErrorno & STACK_ERROR_CAPACITY_LOWER_DEFAULT) {
-        Error[6] = STACK_ERROR_CAPACITY_LOWER_DEFAULT;
-        fprintf(PointerToDump, "%d ", Error[6]);
-    }
-
-    #if defined(CANARY_PROT)
-    
-        if (MyErrorno & STACK_ERROR_LEFT_CANARY_DIED) {
-            Error[7] = STACK_ERROR_LEFT_CANARY_DIED;
-            fprintf(PointerToDump, "%d ", Error[7]);
-        } if (MyErrorno & STACK_ERROR_RIGHT_CANARY_DIED) {
-            Error[8] = STACK_ERROR_RIGHT_CANARY_DIED;
-            fprintf(PointerToDump, "%d ", Error[8]);
-        } if (MyErrorno & STACK_ERROR_DATA_LEFT_CANARY_DIED) {
-            Error[9] = STACK_ERROR_DATA_LEFT_CANARY_DIED;
-            fprintf(PointerToDump, "%d ", Error[9]);
-        } if (MyErrorno & STACK_ERROR_DATA_RIGHT_CANARY_DIED) {
-            Error[10] = STACK_ERROR_DATA_RIGHT_CANARY_DIED;
-            fprintf(PointerToDump, "%d ", Error[10]);
-        }
-    #endif // CANARY_PROT
-    fprintf(PointerToDump, "\n");    
-
-}
-
-void PrintOfData(stack_t* stk, FILE* fp) {
-    size_t counter = 0;
-        for (; counter < stk->size && counter < stk->capacity; counter++) {
-            fprintf(PointerToDump, "[%d] = %d \n", counter, stk->data[counter]);
-        }
-    for (; counter < stk->capacity; counter++) {
-        fprintf(fp, "[%d] = ", counter);
-        for (size_t i = 0; i < 4; i++) {
-            fputc(*((char*) (stk->data + counter) + i), fp);
-        }
-        fprintf(fp, "\n");
     }
 }
 
@@ -271,5 +219,98 @@ size_t StackVerify(stack_t* stk) {
                 
     #endif // CANARY_PROT
     
+    #if defined(HASH_PROT)
+        if (StackHash(stk)) {
+            MyErrorno |= STACK_ERROR_WRONG_HASH;
+        }
+        
+    #endif // HASH_PROT
+    
+
     return MyErrorno;
+}
+
+void ErrorDecoder(size_t* Error) {
+    if (MyErrorno & STACK_ERROR_STACK_OVERFLOW) {                  
+        Error[0] = STACK_ERROR_STACK_OVERFLOW;
+        fprintf(PointerToDump, "%d ", Error[0]);
+    
+    } if (MyErrorno & STACK_ERROR_PTR_TO_DATA_ZERO) {
+        Error[1] = STACK_ERROR_PTR_TO_DATA_ZERO;
+        fprintf(PointerToDump, "%d ", Error[1]);
+    
+    } if (MyErrorno & STACK_ERROR_SIZE_OVER_CAPACITY) {
+        Error[2] = STACK_ERROR_SIZE_OVER_CAPACITY;
+        fprintf(PointerToDump, "%d ", Error[2]);
+    
+    } if (MyErrorno & STACK_ERROR_SIZE_LOWER_ZERO) {
+        Error[3] = STACK_ERROR_SIZE_LOWER_ZERO;
+        fprintf(PointerToDump, "%d ", Error[3]);
+    
+    } if (MyErrorno & STACK_ERROR_CAPACITY_LOWER_ZERO) {
+        Error[4] = STACK_ERROR_CAPACITY_LOWER_ZERO;
+        fprintf(PointerToDump, "%d ", Error[4]); 
+    
+    } if (MyErrorno & STACK_ERROR_CAPACITY_EQUAL_ZERO) {
+        Error[5] = STACK_ERROR_CAPACITY_EQUAL_ZERO;
+        fprintf(PointerToDump, "%d ", Error[5]);
+    
+    } if (MyErrorno & STACK_ERROR_CAPACITY_LOWER_DEFAULT) {
+        Error[6] = STACK_ERROR_CAPACITY_LOWER_DEFAULT;
+        fprintf(PointerToDump, "%d ", Error[6]);
+    }
+
+    #if defined(CANARY_PROT)
+    
+        if (MyErrorno & STACK_ERROR_LEFT_CANARY_DIED) {
+            Error[7] = STACK_ERROR_LEFT_CANARY_DIED;
+            fprintf(PointerToDump, "%d ", Error[7]);
+        } if (MyErrorno & STACK_ERROR_RIGHT_CANARY_DIED) {
+            Error[8] = STACK_ERROR_RIGHT_CANARY_DIED;
+            fprintf(PointerToDump, "%d ", Error[8]);
+        } if (MyErrorno & STACK_ERROR_DATA_LEFT_CANARY_DIED) {
+            Error[9] = STACK_ERROR_DATA_LEFT_CANARY_DIED;
+            fprintf(PointerToDump, "%d ", Error[9]);
+        } if (MyErrorno & STACK_ERROR_DATA_RIGHT_CANARY_DIED) {
+            Error[10] = STACK_ERROR_DATA_RIGHT_CANARY_DIED;
+            fprintf(PointerToDump, "%d ", Error[10]);
+        }
+    #endif // CANARY_PROT
+
+    #if defined(HASH_PROT)
+        if (MyErrorno & STACK_ERROR_WRONG_HASH) {
+            Error[11] = STACK_ERROR_WRONG_HASH;
+            fprintf(PointerToDump, "%d ", Error[11]);
+        }
+        
+    #endif // HASH_PROT
+    
+    fprintf(PointerToDump, "\n");    
+
+}
+
+void PrintOfData(stack_t* stk, FILE* fp) {
+    #if defined(CANARY_PROT)
+    
+        fprintf(PointerToDump, "Left data canary %llX\n", ((canary_t*)stk->data)[-1]);
+        fprintf(PointerToDump, "Right data canary %llX\n", ((canary_t*)(stk->data + stk->capacity))[0]);
+    
+    #endif // CANARY_PROT
+    
+    size_t counter = 0;
+        for (; counter < stk->size && counter < stk->capacity; counter++) {
+            fprintf(PointerToDump, "[%d] = %d \n", counter, stk->data[counter]);
+        }
+    for (; counter < stk->capacity; counter++) {
+        fprintf(fp, "[%d] = ", counter);
+        for (size_t i = 0; i < 4; i++) {
+            fputc(*((char*) (stk->data + counter) + i), fp);
+        }
+        fprintf(fp, "\n");
+    }
+}
+
+bool StackHash(stack_t* stk) {
+
+    return false;
 }

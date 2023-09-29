@@ -36,6 +36,11 @@ struct stack_t {
     DebugVariables var;  
     size_t         OldCapacity;
 
+    #if defined(HASH_PROT)
+        size_t hash;
+    #endif // HASH_PROT
+    
+
     #if defined(CANARY_PROT)
         int offset = 0;
         canary_t RightCanary = 0xBADC0FFEE;
@@ -58,5 +63,6 @@ size_t StackResize(stack_t* stk, bool CodeOfResize);
 void StackDump(stack_t* stk, const char* file, const char* function, size_t line);
 size_t StackVerify(stack_t* stk);
 void ErrorDecoder(size_t* Error);
+bool StackHash(stack_t* stk);
 
 #endif

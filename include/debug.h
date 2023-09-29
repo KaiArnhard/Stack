@@ -23,6 +23,10 @@ enum Errors_t {
         STACK_ERROR_DATA_RIGHT_CANARY_DIED = 2048,
     #endif // CANARY_PROT
     
+    #if defined(HASH_PROT)
+        STACK_ERROR_WRONG_HASH             = 4096
+    #endif // HASH_PROT
+    
 };
 
 static size_t MyErrorno = STACK_NO_ERRORS;
