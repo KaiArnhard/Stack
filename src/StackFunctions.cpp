@@ -6,6 +6,13 @@ void StackCtor (stack_t* stk, size_t capacity, const char* name, const size_t li
         char* ptr = nullptr;
         ptr = (char* ) calloc(capacity * sizeof(elem_t) + 2 * sizeof(canary_t), sizeof(char));
         assert(ptr);
+
+        ((canary_t*) ptr)[0] = stk->LeftCanary;
+        if(stk->offset = (((size_t) ptr + sizeof(canary_t) + sizeof(elem_t) * capacity) % 8) != 0) {
+            ((canary_t*) (ptr + sizeof(canary_t) + capacity * sizeof(elem_t) + stk->offset))[0] = stk->RightCanary;
+        } else {
+            ((canary_t*) (ptr + sizeof(canary_t) + capacity * sizeof(elem_t)))[0] = stk->RightCanary;
+        }
         stk->data = (elem_t*) (ptr + sizeof(canary_t));
 
     #else
@@ -24,8 +31,17 @@ void StackCtor (stack_t* stk, size_t capacity, const char* name, const size_t li
 void StackDtor(stack_t* stk) {
     STACK_CHECK(stk);
 
-    PoisStack(stk);
-    free(stk->data);
+    #if defined(CANARY_PROT)
+    
+        PoisStack(stk);
+        free(((char*)stk->data - sizeof(canary_t)));
+    #else
+    
+        PoisStack(stk);
+        free(stk->data);
+    #endif // CANARY_PROT
+    
+
     stk->data = nullptr;
     stk->capacity = UINT_MAX;
     stk->size = UINT_MAX;
@@ -92,52 +108,145 @@ size_t StackResize(stack_t* stk, bool CodeOfResize) {
 void StackDump(stack_t* stk, const char* file, const char* function, size_t line) {
     
     fprintf(PointerToDump, "Stack [%p], %s  from %s line: %d %s \n\n", stk, stk->var.name, stk->var.file, stk->var.line, stk->var.function);
+
+    #if defined(CANARY_PROT)
+
+        fprintf(PointerToDump, "Left stack canary %llX \n",  stk->LeftCanary);
+        fprintf(PointerToDump, "Right stack canary %llX \n", stk->RightCanary);
+    #endif // CANARY_PROT
+    
     fprintf(PointerToDump, "Called from %s(%d), %s\n", file, line, function);
-    fprintf(PointerToDump, "Error number %d\n", MyError);
+    fprintf(PointerToDump, "Error numbers \n");
+    size_t Error[11] = {};
+    ErrorDecoder(Error);
     fprintf(PointerToDump, "size = %d, capacity = %d \n", stk->size, stk->capacity);
     fprintf(PointerToDump, "data [%p] \n", stk->data);
 
-    if (stk->capacity != UINT_MAX && stk->data != nullptr) {
-        size_t counter = 0;
-        for (; counter < stk->size && counter < stk->capacity; counter++) {
-            fprintf(PointerToDump, "[%d] = %d \n", counter, stk->data[counter]);
-        }
-        PrintOfPoison(stk, counter, PointerToDump);
+    if (Error[1]) {
+        exit(-1);
+    }
     
-    } else if (stk->size != __UINT32_MAX__) {
+    if (!Error[4] && !Error[5]) {
+        
+        PrintOfData(stk, PointerToDump);
+    
+    } else if (Error[3]) {
         for (size_t counter = 0; counter < stk->size; counter++) {
             fprintf(PointerToDump, "[%d] = %d \n", counter, stk->data[counter]);
         }
     }
-    
-    exit(-1);
 }
 
-void PrintOfPoison(stack_t* stk, size_t counter, FILE* fp) {
-    for (; counter < stk->capacity; counter++) {
-            fprintf(fp, "[%d] = ", counter);
-            for (size_t i = 0; i < 4; i++) {
-                fputc(*((char*) (stk->data + counter) + i), fp);
-            }
-            fprintf(fp, "\n");
+void ErrorDecoder(size_t* Error) {
+    if (MyErrorno & STACK_ERROR_STACK_OVERFLOW) {                  
+        Error[0] = STACK_ERROR_STACK_OVERFLOW;
+        fprintf(PointerToDump, "%d ", Error[0]);
+    
+    } if (MyErrorno & STACK_ERROR_PTR_TO_DATA_ZERO) {
+        Error[1] = STACK_ERROR_PTR_TO_DATA_ZERO;
+        fprintf(PointerToDump, "%d ", Error[1]);
+    
+    } if (MyErrorno & STACK_ERROR_SIZE_OVER_CAPACITY) {
+        Error[2] = STACK_ERROR_SIZE_OVER_CAPACITY;
+        fprintf(PointerToDump, "%d ", Error[2]);
+    
+    } if (MyErrorno & STACK_ERROR_SIZE_LOWER_ZERO) {
+        Error[3] = STACK_ERROR_SIZE_LOWER_ZERO;
+        fprintf(PointerToDump, "%d ", Error[3]);
+    
+    } if (MyErrorno & STACK_ERROR_CAPACITY_LOWER_ZERO) {
+        Error[4] = STACK_ERROR_CAPACITY_LOWER_ZERO;
+        fprintf(PointerToDump, "%d ", Error[4]); 
+    
+    } if (MyErrorno & STACK_ERROR_CAPACITY_EQUAL_ZERO) {
+        Error[5] = STACK_ERROR_CAPACITY_EQUAL_ZERO;
+        fprintf(PointerToDump, "%d ", Error[5]);
+    
+    } if (MyErrorno & STACK_ERROR_CAPACITY_LOWER_DEFAULT) {
+        Error[6] = STACK_ERROR_CAPACITY_LOWER_DEFAULT;
+        fprintf(PointerToDump, "%d ", Error[6]);
+    }
+
+    #if defined(CANARY_PROT)
+    
+        if (MyErrorno & STACK_ERROR_LEFT_CANARY_DIED) {
+            Error[7] = STACK_ERROR_LEFT_CANARY_DIED;
+            fprintf(PointerToDump, "%d ", Error[7]);
+        } if (MyErrorno & STACK_ERROR_RIGHT_CANARY_DIED) {
+            Error[8] = STACK_ERROR_RIGHT_CANARY_DIED;
+            fprintf(PointerToDump, "%d ", Error[8]);
+        } if (MyErrorno & STACK_ERROR_DATA_LEFT_CANARY_DIED) {
+            Error[9] = STACK_ERROR_DATA_LEFT_CANARY_DIED;
+            fprintf(PointerToDump, "%d ", Error[9]);
+        } if (MyErrorno & STACK_ERROR_DATA_RIGHT_CANARY_DIED) {
+            Error[10] = STACK_ERROR_DATA_RIGHT_CANARY_DIED;
+            fprintf(PointerToDump, "%d ", Error[10]);
         }
+    #endif // CANARY_PROT
+    fprintf(PointerToDump, "\n");    
+
+}
+
+void PrintOfData(stack_t* stk, FILE* fp) {
+    size_t counter = 0;
+        for (; counter < stk->size && counter < stk->capacity; counter++) {
+            fprintf(PointerToDump, "[%d] = %d \n", counter, stk->data[counter]);
+        }
+    for (; counter < stk->capacity; counter++) {
+        fprintf(fp, "[%d] = ", counter);
+        for (size_t i = 0; i < 4; i++) {
+            fputc(*((char*) (stk->data + counter) + i), fp);
+        }
+        fprintf(fp, "\n");
+    }
 }
 
 size_t StackVerify(stack_t* stk) {
     assert(stk);
     if (stk->data == nullptr) {
-        MyError |= STACK_ERROR_PTR_TO_DATA_ZERO;
+        MyErrorno |= STACK_ERROR_PTR_TO_DATA_ZERO;
+    
     } if (stk->capacity < stk->size) {
-        MyError |= STACK_ERROR_SIZE_OVER_CAPACITY;
-    } if (stk->capacity == __UINT32_MAX__) {
-        MyError |= STACK_ERROR_CAPACITY_LOWER_ZERO;
+        MyErrorno |= STACK_ERROR_SIZE_OVER_CAPACITY;
+    
+    } if (stk->size == __UINT64_MAX__) {
+        MyErrorno |= STACK_ERROR_SIZE_LOWER_ZERO;
+    
+    } if (stk->capacity == __UINT64_MAX__) {
+        MyErrorno |= STACK_ERROR_CAPACITY_LOWER_ZERO;
+    
     } if (stk->capacity == 0) {
-        MyError |= STACK_ERROR_CAPACITY_EQUAL_ZERO;
-    } if (stk->size == __UINT32_MAX__) {
-        MyError |= STACK_ERROR_SIZE_LOWER_ZERO;
+        MyErrorno |= STACK_ERROR_CAPACITY_EQUAL_ZERO;
+    
     } if (stk->capacity < DefaultSize) {
-        MyError |= STACK_ERROR_CAPACITY_LOWER_DEFAULT;
+        MyErrorno |= STACK_ERROR_CAPACITY_LOWER_DEFAULT;
     }
-    MyError = STACK_ERROR_STACK_OVERFLOW;
-    return MyError;
+
+    #if defined(CANARY_PROT)
+    
+        if (stk->LeftCanary != 0xDED320BED) {
+            MyErrorno |= STACK_ERROR_LEFT_CANARY_DIED;
+        
+        } if (stk->RightCanary != 0xBADC0FFEE) {
+            MyErrorno |= STACK_ERROR_LEFT_CANARY_DIED;
+        
+        } if (stk->offset) {
+             if (((canary_t*) stk->data)[-1] != 0xDED320BED) {
+                MyErrorno |= STACK_ERROR_DATA_LEFT_CANARY_DIED;
+        
+            } if (((canary_t*) (stk->data + stk->capacity + stk->offset))[0] != 0xBADC0FFEE) {
+                MyErrorno |= STACK_ERROR_DATA_RIGHT_CANARY_DIED;
+            }
+        } else {
+            if (((canary_t*) stk->data)[-1] != 0xDED320BED) {
+                MyErrorno |= STACK_ERROR_DATA_LEFT_CANARY_DIED;
+        
+            } if (((canary_t*) (stk->data + stk->capacity))[0] != 0xBADC0FFEE) {
+                MyErrorno |= STACK_ERROR_DATA_RIGHT_CANARY_DIED;
+        }
+        }        
+                
+    #endif // CANARY_PROT
+    
+    return MyErrorno;
 }

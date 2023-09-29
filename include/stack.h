@@ -27,7 +27,7 @@ struct DebugVariables
 };
 struct stack_t {
     #if defined(CANARY_PROT)
-        canary_t CanaryLeft = 0xDED320BED;
+        canary_t LeftCanary = 0xDED320BED;
     #endif //LEFT_CANARY_PROT 
     
     elem_t*        data;
@@ -37,7 +37,8 @@ struct stack_t {
     size_t         OldCapacity;
 
     #if defined(CANARY_PROT)
-        canary_t CanaryRight = 0xBADC0FFEE;
+        int offset = 0;
+        canary_t RightCanary = 0xBADC0FFEE;
     #endif //RIGHT_CANARY_PROT
 };
 
@@ -48,6 +49,7 @@ struct stack_t {
 void StackCtor (stack_t* stk, size_t capacity, const char* name, const size_t line, const char* file, const char* function);
 void StackDtor (stack_t* stk);
 void PoisStack(stack_t* stk);
+void PrintOfData(stack_t* stk, FILE* fp);
 
 void StackPush(stack_t* stk, const elem_t variable);
 void StackPop(stack_t* stk, elem_t* ptr);
@@ -55,6 +57,6 @@ size_t StackResize(stack_t* stk, bool CodeOfResize);
 
 void StackDump(stack_t* stk, const char* file, const char* function, size_t line);
 size_t StackVerify(stack_t* stk);
-void PrintOfPoison(stack_t* stk, size_t counter, FILE* fp);
+void ErrorDecoder(size_t* Error);
 
 #endif

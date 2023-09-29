@@ -1,33 +1,24 @@
-#include "../include/stack.h"
+#include <cstdio>
+#include <cstdlib>
+
+typedef int elem_t;
+typedef unsigned long long canary_t;
 
 int main() {
-    stack_t stk = {};
-    int i = 10;
-    fprintf(PointerToDump, "%d\n", i);
-    StackDump(&stk, "file", "function", 12);
-}
+    fopen("../StackDump.txt", "w");
+    int capacity = 10;
+    char* ptr = nullptr;
+    int offset = 0;
+    ptr = (char* ) calloc(capacity * sizeof(elem_t) + 2 * sizeof(canary_t), sizeof(char));
 
-void StackDump(stack_t* stk, const char* file, const char* function, size_t line) {
+    ((canary_t*) ptr)[0] = 0xBADDED;
     
-    printf("debug\n");
-    fprintf(PointerToDump, "Stack [%p], %s  from %s line: %d %s \n\n", stk, stk->var.name, stk->var.file, stk->var.line, stk->var.function);
-    fprintf(PointerToDump, "Called from %s(%d), %s\n", file, line, function);
-    fprintf(PointerToDump, "Number of Error %d\n", MyError);
-    fprintf(PointerToDump, "size = %d, capacity = %d \n", stk->size, stk->capacity);
-    fprintf(PointerToDump, "data [%p] \n", stk->data);
-
-    if (stk->capacity != UINT_MAX && stk->data != nullptr) {
-        size_t counter = 0;
-        for (; counter < stk->size && counter < stk->capacity; counter++) {
-            fprintf(PointerToDump, "[%d] = %d \n", counter, stk->data[counter]);
-        }
-        //PrintOfPoison(stk, counter, PointerToDump);
-    
-    } else if (stk->size != __UINT32_MAX__) {
-        for (size_t counter = 0; counter < stk->size; counter++) {
-            fprintf(PointerToDump, "[%d] = %d \n", counter, stk->data[counter]);
-        }
+    if(offset = (((size_t) (ptr + sizeof(canary_t) + sizeof(elem_t) * capacity)) % 8) != 0) {
+        ((canary_t*) (ptr + sizeof(canary_t) + capacity * sizeof(elem_t) + offset))[0] = 0xBAD0BED;
+    } else {
+        ((canary_t*) (ptr + sizeof(canary_t) + capacity * sizeof(elem_t)))[0] = 0xBAD0BED32;
     }
-    
-    //abort();
+    printf("%d\n", offset);
+    printf("%llX\n", ((canary_t*) ptr)[0]);
+    printf("%llX\n", ((canary_t*) (ptr + sizeof(canary_t) + capacity * sizeof(elem_t)))[0]);
 }
