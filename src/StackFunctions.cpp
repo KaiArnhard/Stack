@@ -6,9 +6,11 @@ void StackCtor (stack_t* stk, size_t capacity, const char* name, const size_t li
         char* ptr = nullptr;
         ptr = (char* ) calloc(capacity * sizeof(elem_t) + 2 * sizeof(canary_t), sizeof(char));
         assert(ptr);
+        stk->offset = (((size_t) ptr + sizeof(canary_t) + sizeof(elem_t) * capacity) % 8);
 
         ((canary_t*) ptr)[0] = stk->LeftCanary;
-        if(stk->offset = (((size_t) ptr + sizeof(canary_t) + sizeof(elem_t) * capacity) % 8) != 0) {
+
+        if (stk->offset != 0) {
             ((canary_t*) (ptr + sizeof(canary_t) + capacity * sizeof(elem_t) + stk->offset))[0] = stk->RightCanary;
         } else {
             ((canary_t*) (ptr + sizeof(canary_t) + capacity * sizeof(elem_t)))[0] = stk->RightCanary;
@@ -16,8 +18,7 @@ void StackCtor (stack_t* stk, size_t capacity, const char* name, const size_t li
         stk->data = (elem_t*) (ptr + sizeof(canary_t));
 
     #else
-        stk->data = (elem_t*) calloc(capacity, sizeof(elem_t));
-        
+        stk->data = (elem_t*) calloc(capacity, sizeof(elem_t));   
     #endif // CANARY_PROT
     stk->capacity = capacity;
     stk->size = 0;
@@ -36,7 +37,6 @@ void StackDtor(stack_t* stk) {
         PoisStack(stk);
         free(((char*)stk->data - sizeof(canary_t)));
     #else
-    
         PoisStack(stk);
         free(stk->data);
     #endif // CANARY_PROT
@@ -80,27 +80,50 @@ void StackPop(stack_t* stk, elem_t* ptr) {
 
 size_t StackResize(stack_t* stk, bool CodeOfResize) {
     STACK_CHECK(stk);
-    elem_t* ptr = nullptr;
+    char* ptr = nullptr;
     size_t OldCapacity = 0;
-    switch (CodeOfResize) {
-    case DOWN:
-        ptr = (elem_t*) realloc(stk->data, sizeof(elem_t) * stk->OldCapacity);
-        assert(ptr);
-        stk->data = ptr;
-        PoisStack(stk);
-        stk->capacity = stk->OldCapacity;
-        break;
-    case UP:
-        OldCapacity = stk->capacity;
-        stk->capacity *= ResizeConst;
-        ptr = (elem_t*) realloc(stk->data, sizeof(elem_t) * stk->capacity);
-        assert(ptr);
-        stk->data = ptr;
-        break;
-    default:
-        abort();
-        break;
-    }
+    #if defined(CANARY_PROT)
+        switch (CodeOfResize) {
+            case DOWN:
+                ptr = (char*) realloc(((char*) stk->data) - sizeof(canary_t), sizeof(elem_t) * stk->OldCapacity + 2 * sizeof(canary_t));
+                assert(ptr);
+                stk->data = (elem_t*) (ptr + sizeof(canary_t));
+                PoisStack(stk);
+                stk->capacity = stk->OldCapacity;
+                break;
+            case UP:
+                OldCapacity = stk->capacity;
+                stk->capacity *= ResizeConst;
+                ptr = (char*) realloc(((char*) stk->data) - sizeof(canary_t), sizeof(elem_t) * stk->capacity + 2 * sizeof(canary_t));
+                assert(ptr);
+                stk->data = (elem_t*) (ptr + sizeof(canary_t));
+                break;
+            default:
+                abort();
+                break;
+            }
+    #else
+        switch (CodeOfResize) {
+        case DOWN:
+            ptr = (char*) realloc(stk->data, sizeof(elem_t) * stk->OldCapacity);
+            assert(ptr);
+            stk->data = (elem_t*) ptr;
+            PoisStack(stk);
+            stk->capacity = stk->OldCapacity;
+            break;
+        case UP:
+            OldCapacity = stk->capacity;
+            stk->capacity *= ResizeConst;
+            ptr = (char*) realloc(stk->data, sizeof(elem_t) * stk->capacity);
+            assert(ptr);
+            stk->data = (elem_t*) ptr;
+            break;
+        default:
+            abort();
+            break;
+        }
+    #endif // CANARY_PROT
+    
     STACK_CHECK(stk);
     return OldCapacity;
 }
