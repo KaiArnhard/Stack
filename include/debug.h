@@ -9,23 +9,23 @@ static FILE* PointerToDump = fopen("../StackDump.txt", "w");
 enum Errors_t {
     STACK_NO_ERRORS                        = 0,
     STACK_ERROR_STACK_OVERFLOW             = 1,
-    STACK_ERROR_PTR_TO_STK_ZERO            = 2,
-    STACK_ERROR_PTR_TO_DATA_ZERO           = 4,
-    STACK_ERROR_SIZE_OVER_CAPACITY         = 8,
-    STACK_ERROR_SIZE_LOWER_ZERO            = 16,
-    STACK_ERROR_CAPACITY_LOWER_ZERO        = 32,
-    STACK_ERROR_CAPACITY_EQUAL_ZERO        = 64,
-    STACK_ERROR_CAPACITY_LOWER_DEFAULT     = 128,
+    STACK_ERROR_PTR_TO_STK_ZERO            = 2 << 1,
+    STACK_ERROR_PTR_TO_DATA_ZERO           = 2 << 2,
+    STACK_ERROR_SIZE_OVER_CAPACITY         = 2 << 3,
+    STACK_ERROR_SIZE_LOWER_ZERO            = 2 << 4,
+    STACK_ERROR_CAPACITY_LOWER_ZERO        = 2 << 5,
+    STACK_ERROR_CAPACITY_EQUAL_ZERO        = 2 << 6,
+    STACK_ERROR_CAPACITY_LOWER_DEFAULT     = 2 << 7,
     
     #if defined(CANARY_PROT)
-        STACK_ERROR_LEFT_CANARY_DIED       = 256,
-        STACK_ERROR_RIGHT_CANARY_DIED      = 512,
-        STACK_ERROR_DATA_LEFT_CANARY_DIED  = 1024,
-        STACK_ERROR_DATA_RIGHT_CANARY_DIED = 2048,
+        STACK_ERROR_LEFT_CANARY_DIED       = 2 << 8,
+        STACK_ERROR_RIGHT_CANARY_DIED      = 2 << 9,
+        STACK_ERROR_DATA_LEFT_CANARY_DIED  = 2 << 10,
+        STACK_ERROR_DATA_RIGHT_CANARY_DIED = 2 << 11,
     #endif // CANARY_PROT
     
     #if defined(HASH_PROT)
-        STACK_ERROR_WRONG_HASH             = 4096
+        STACK_ERROR_WRONG_HASH             = 2 << 12
     #endif // HASH_PROT
     
 };
@@ -49,7 +49,7 @@ static size_t MyErrorno = STACK_NO_ERRORS;
 #endif // HASH_PROT
 
 
-#define assert(condition)                                                                                                                                           \
+#define MyAssert(condition)                                                                                                                                           \
 if(!condition) {                                                                                                                                                    \
     MyErrorno |= STACK_ERROR_PTR_TO_STK_ZERO;                                                                                                                       \
     fprintf(PointerToDump, "Ptr %p, Error number %d, occurs in FILE %s, on line %d, function %s\n", condition, MyErrorno, __FILE__, __LINE__, __PRETTY_FUNCTION__); \

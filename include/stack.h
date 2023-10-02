@@ -10,7 +10,7 @@ typedef int elem_t;
 
 static const int ResizeConst = 2;
 
-enum Resize {
+enum Resize_t {
     UP   = 1,
     DOWN = 0
 };
@@ -70,7 +70,7 @@ void PrintOfData(stack_t* stk, FILE* fp);
 
 void StackPush(stack_t* stk, const elem_t variable);
 void StackPop(stack_t* stk, elem_t* ptr);
-size_t StackResize(stack_t* stk, bool CodeOfResize);
+size_t StackResize(stack_t* stk, Resize_t CodeOfResize);
 
 void StackDump(stack_t* stk, const char* file, const char* function, size_t line);
 size_t StackVerify(stack_t* stk);

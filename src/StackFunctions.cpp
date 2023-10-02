@@ -1,7 +1,8 @@
 #include "../include/stack.h"
+#include <assert.h>
 
 void StackCtor (stack_t* stk, size_t capacity, const char* name, const size_t line, const char* file, const char* function) {
-    assert(stk);
+    MyAssert(stk);
 
     size_t size = 0;
     stk->capacity = capacity;
@@ -98,8 +99,9 @@ void StackPop(stack_t* stk, elem_t* ptr) {
     STACK_CHECK(stk);
 }
 
-size_t StackResize(stack_t* stk, bool CodeOfResize) {
+size_t StackResize(stack_t* stk, Resize_t CodeOfResize) {
     STACK_CHECK(stk);
+    assert(CodeOfResize != 0 && CodeOfResize != 1);
     char* ptr = nullptr;
     size_t OldCapacity = 0;
     #if defined(CANARY_PROT)
@@ -121,15 +123,12 @@ size_t StackResize(stack_t* stk, bool CodeOfResize) {
                 ((canary_t *) (stk->data + stk->capacity))[0] = stk->RightCanary;
                 PoisStack(stk);
                 break;
-            default:
-                abort();
-                break;
             }
     #else
         switch (CodeOfResize) {
         case DOWN:
             ptr = (char*) realloc(stk->data, sizeof(elem_t) * stk->OldCapacity);
-            assert(ptr);
+            MyAssert(ptr);
             stk->data = (elem_t*) ptr;
             stk->capacity = stk->OldCapacity;
             break;
@@ -137,7 +136,7 @@ size_t StackResize(stack_t* stk, bool CodeOfResize) {
             OldCapacity = stk->capacity;
             stk->capacity *= ResizeConst;
             ptr = (char*) realloc(stk->data, sizeof(elem_t) * stk->capacity);
-            assert(ptr);
+            MyAssert(ptr);
             stk->data = (elem_t*) ptr;
             PoisStack(stk);
             break;
@@ -178,7 +177,7 @@ void StackDump(stack_t* stk, const char* file, const char* function, size_t line
     fprintf(PointerToDump, "data [%p] \n", stk->data);
 
     if (Error[1] || Error[3] || Error[4]) {
-        exit(-1);
+        abort();
     }
     
     if (!Error[4] && !Error[5]) {
@@ -193,7 +192,7 @@ void StackDump(stack_t* stk, const char* file, const char* function, size_t line
 }
 
 size_t StackVerify(stack_t* stk) {
-    assert(stk);
+    MyAssert(stk);
     if (stk->data == nullptr) {
         MyErrorno |= STACK_ERROR_PTR_TO_DATA_ZERO;
     
