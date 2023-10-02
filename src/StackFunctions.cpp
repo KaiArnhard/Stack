@@ -101,7 +101,7 @@ void StackPop(stack_t* stk, elem_t* ptr) {
 
 size_t StackResize(stack_t* stk, Resize_t CodeOfResize) {
     STACK_CHECK(stk);
-    assert(CodeOfResize != 0 && CodeOfResize != 1);
+    assert(CodeOfResize == 0 || CodeOfResize == 1);
     char* ptr = nullptr;
     size_t OldCapacity = 0;
     #if defined(CANARY_PROT)
@@ -139,9 +139,6 @@ size_t StackResize(stack_t* stk, Resize_t CodeOfResize) {
             MyAssert(ptr);
             stk->data = (elem_t*) ptr;
             PoisStack(stk);
-            break;
-        default:
-            abort();
             break;
         }
     #endif // CANARY_PROT
@@ -246,7 +243,7 @@ size_t StackVerify(stack_t* stk) {
         
     #endif // HASH_PROT
     
-
+    MyErrorno |= STACK_ERROR_STACK_OVERFLOW;
     return MyErrorno;
 }
 
