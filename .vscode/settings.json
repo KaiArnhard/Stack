@@ -1,9 +1,0 @@
-{
-    "files.associations": {
-        "cstdlib": "cpp",
-        "cstdint": "cpp",
-        "array": "cpp",
-        "string_view": "cpp",
-        "initializer_list": "cpp"
-    }
-}
