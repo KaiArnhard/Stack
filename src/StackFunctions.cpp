@@ -1,4 +1,3 @@
-
 #include "../include/stack.h"
 
 void StackCtor (stack_t* stk, size_t capacity, const char* name, const size_t line, const char* file, const char* function) {
@@ -361,7 +360,6 @@ void PrintOfData(stack_t* stk, FILE* fp) {
         
         stk->hash = StackHash((char*) stk, StackSize) + StackHash((char*) stk->data, stk->capacity * sizeof(elem_t));
         
-        printf("Stack hash stk.hash %lld, counted hash %lld\n", stk->hash, hash);
         if (hash == stk->hash) {
             return true;
         }
