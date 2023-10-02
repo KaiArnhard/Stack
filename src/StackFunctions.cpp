@@ -76,10 +76,10 @@ void StackPush(stack_t* stk, const elem_t variable) {
     
     stk->data[stk->size] = variable;
     stk->size++;
+    
     #if defined(HASH_PROT)
-    
+        stk->hash = 0;
         stk->hash = StackHash((char*)stk, StackSize) + StackHash((char*) stk->data, sizeof(elem_t) * stk->capacity);
-    
     #endif // HASH_PROT
     
     STACK_CHECK(stk);
@@ -93,10 +93,10 @@ void StackPop(stack_t* stk, elem_t* ptr) {
     stk->size--;
     *ptr = stk->data[stk->size];
     stk->data[stk->size] = POISON;
+
      #if defined(HASH_PROT)
-    
+        stk->hash = 0;
         stk->hash = StackHash((char*)stk, StackSize) + StackHash((char*) stk->data, sizeof(elem_t) * stk->capacity);
-    
     #endif // HASH_PROT
     STACK_CHECK(stk);
 }
@@ -151,7 +151,8 @@ size_t StackResize(stack_t* stk, bool CodeOfResize) {
     #endif // CANARY_PROT
 
     #if defined(HASH_PROT)
-        stk->hash = StackHash((char*)stk, StackSize) + StackHash((char*) stk->data, sizeof(elem_t) * stk->capacity);
+        stk->hash = 0;
+        stk->hash = StackHash((char*) stk, StackSize) + StackHash((char*) stk->data, sizeof(elem_t) * stk->capacity);
     #endif // HASH_PROT
     
     STACK_CHECK(stk);
@@ -337,21 +338,21 @@ void PrintOfData(stack_t* stk, FILE* fp) {
 #if defined(HASH_PROT)
 
     hash_t StackHash(char* ptr, size_t length) {
-    hash_t hash = 0;
+        hash_t hash = 0;
 
-    for (size_t count = 0; count < (length - (length % 4)); count += 4) {
-        for (size_t counter = 0; counter < 4; counter++) {
-            ((char*) &hash)[counter] |= ptr[count + counter];
+        for (size_t count = 0; count < (length - (length % 4)); count += 4) {
+            for (size_t counter = 0; counter < 4; counter++) {
+                ((char*) &hash)[counter] |= ptr[count + counter];
+            }
         }
-    }
-    for (int count = (length - 1 - (length % 4)); count >= 0; count -= 4) {
-        for (int counter = 3; counter < 8; counter++) {
-            ((char*) &hash)[counter] |= ptr[count - counter];
+        for (int count = (length - 1 - (length % 4)); count >= 0; count -= 4) {
+            for (int counter = 3; counter < 8; counter++) {
+                ((char*) &hash)[counter] |= ptr[count - counter];
+            }
         }
+        
+        return hash;
     }
-    
-    return hash;
-}
 
     bool StackHashCheck(stack_t *stk) {
         hash_t hash = stk->hash;

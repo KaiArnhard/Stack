@@ -51,7 +51,6 @@ struct stack_t {
 
     #if defined(CANARY_PROT)
         const size_t StackSize = 2 * sizeof(canary_t) + sizeof(elem_t*) + 3 * sizeof(size_t) + sizeof(DebugVariables);
-    
     #else
         const size_t StackSize = sizeof(elem_t*) + 3 * sizeof(size_t) + sizeof(DebugVariables);
     
