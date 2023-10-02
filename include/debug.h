@@ -42,8 +42,9 @@ static size_t MyErrorno = STACK_NO_ERRORS;
 
 #if defined(HASH_PROT)
 
-    #define STACK_HASH(stk, length)                              \
-        StackHash((char*) stk, length);                          \
+    #define STACK_HASH(stk)                                                                                             \
+        stk->hash = 0;                                                                                                  \
+        stk->hash = StackHash((char*) stk, StackSize) + StackHash((char*) stk->data, stk->capacity * sizeof(elem_t))    \
 
 #endif // HASH_PROT
 

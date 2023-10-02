@@ -1,13 +1,13 @@
-Stack [0x7ffdfa156d10], &stk  from main.cpp line: 7 int main() 
+Stack [0x7fffd9d30670], &stk  from main.cpp line: 7 int main() 
 
 Left stack canary DED320BED 
 Right stack canary BADC0FFEE 
 Called from main.cpp(15), int main()
 Error numbers 
 
-Stack hash 6822611845355450201
+Stack hash 386338203328350
 size = 1, capacity = 10 
-data [0x5573f02d0ab8] 
+data [0x55601ee9e668] 
 Left data canary DED320BED
 Right data canary BADC0FFEE
 [0] = 10 

@@ -1,4 +1,5 @@
 #include "../include/stack.h"
+#include <time.h>
 
 void StackCtor (stack_t* stk, size_t capacity, const char* name, const size_t line, const char* file, const char* function) {
     assert(stk);
@@ -25,7 +26,7 @@ void StackCtor (stack_t* stk, size_t capacity, const char* name, const size_t li
         stk->data = (elem_t*) (ptr + sizeof(canary_t));
         PoisStack(stk);
         #if defined(HASH_PROT)
-            stk->hash = StackHash((char*) stk, StackSize) + StackHash((char*) stk->data, stk->capacity * sizeof(elem_t));
+            STACK_HASH(stk);
         #endif // HASH_PROT
         
 
@@ -33,7 +34,7 @@ void StackCtor (stack_t* stk, size_t capacity, const char* name, const size_t li
         stk->data = (elem_t*) calloc(capacity, sizeof(elem_t));   
         PoisStack(stk);
         #if defined(HASH_PROT)
-            stk->hash = StackHash((char*) stk, StackSize) + StackHash((char*) stk->data, stk->capacity * sizeof(elem_t));
+            STACK_HASH(stk);
         #endif // HASH_PROT
     
     #endif // CANARY_PROT
@@ -77,8 +78,7 @@ void StackPush(stack_t* stk, const elem_t variable) {
     stk->size++;
     
     #if defined(HASH_PROT)
-        stk->hash = 0;
-        stk->hash = StackHash((char*)stk, StackSize) + StackHash((char*) stk->data, sizeof(elem_t) * stk->capacity);
+        STACK_HASH(stk);
     #endif // HASH_PROT
     
     STACK_CHECK(stk);
@@ -94,8 +94,7 @@ void StackPop(stack_t* stk, elem_t* ptr) {
     stk->data[stk->size] = POISON;
 
      #if defined(HASH_PROT)
-        stk->hash = 0;
-        stk->hash = StackHash((char*)stk, StackSize) + StackHash((char*) stk->data, sizeof(elem_t) * stk->capacity);
+        STACK_HASH(stk);
     #endif // HASH_PROT
     STACK_CHECK(stk);
 }
@@ -150,8 +149,7 @@ size_t StackResize(stack_t* stk, bool CodeOfResize) {
     #endif // CANARY_PROT
 
     #if defined(HASH_PROT)
-        stk->hash = 0;
-        stk->hash = StackHash((char*) stk, StackSize) + StackHash((char*) stk->data, sizeof(elem_t) * stk->capacity);
+        STACK_HASH(stk);
     #endif // HASH_PROT
     
     STACK_CHECK(stk);
@@ -337,16 +335,17 @@ void PrintOfData(stack_t* stk, FILE* fp) {
 #if defined(HASH_PROT)
 
     hash_t StackHash(char* ptr, size_t length) {
+        srand(time(nullptr));
         hash_t hash = 0;
 
         for (size_t count = 0; count < (length - (length % 4)); count += 4) {
             for (size_t counter = 0; counter < 4; counter++) {
-                ((char*) &hash)[counter] |= ptr[count + counter];
+                ((char*) &hash)[rand() % 3] |= ptr[count + counter];
             }
         }
         for (int count = (length - 1 - (length % 4)); count >= 0; count -= 4) {
-            for (int counter = 3; counter < 8; counter++) {
-                ((char*) &hash)[counter] |= ptr[count - counter];
+            for (int counter = 0; counter < 4; counter++) {
+                ((char*) &hash)[3 + (rand() % 3)] |= ptr[count - counter];
             }
         }
         
