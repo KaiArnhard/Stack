@@ -348,6 +348,7 @@ void PrintOfData(stack_t* stk, FILE* fp) {
                 ((char*) &hash)[3 + (rand() % 3)] |= ptr[count - counter];
             }
         }
+        hash ^= (size_t) (ptr + (rand() % length));
         
         return hash;
     }
