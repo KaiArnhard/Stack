@@ -1,5 +1,4 @@
 #include "../include/stack.h"
-#include <time.h>
 
 void StackCtor (stack_t* stk, size_t capacity, const char* name, const size_t line, const char* file, const char* function) {
     assert(stk);
@@ -335,20 +334,19 @@ void PrintOfData(stack_t* stk, FILE* fp) {
 #if defined(HASH_PROT)
 
     hash_t StackHash(char* ptr, size_t length) {
-        srand(time(nullptr));
         hash_t hash = 0;
 
         for (size_t count = 0; count < (length - (length % 4)); count += 4) {
             for (size_t counter = 0; counter < 4; counter++) {
-                ((char*) &hash)[rand() % 3] |= ptr[count + counter];
+                ((char*) &hash)[counter] |= ptr[count + counter];
             }
         }
         for (int count = (length - 1 - (length % 4)); count >= 0; count -= 4) {
-            for (int counter = 0; counter < 4; counter++) {
-                ((char*) &hash)[3 + (rand() % 3)] |= ptr[count - counter];
+            for (int counter = 3; counter < 7; counter++) {
+                ((char*) &hash)[counter] |= ptr[count - counter];
             }
         }
-        hash ^= (size_t) (ptr + (rand() % length));
+        hash ^= (size_t) ptr;
         
         return hash;
     }
