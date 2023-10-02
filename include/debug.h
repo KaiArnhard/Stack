@@ -9,23 +9,23 @@ static FILE* PointerToDump = fopen("../StackDump.txt", "w");
 enum Errors_t {
     STACK_NO_ERRORS                        = 0,
     STACK_ERROR_STACK_OVERFLOW             = 1,
-    STACK_ERROR_PTR_TO_STK_ZERO            = 2 << 1,
-    STACK_ERROR_PTR_TO_DATA_ZERO           = 2 << 2,
-    STACK_ERROR_SIZE_OVER_CAPACITY         = 2 << 3,
-    STACK_ERROR_SIZE_LOWER_ZERO            = 2 << 4,
-    STACK_ERROR_CAPACITY_LOWER_ZERO        = 2 << 5,
-    STACK_ERROR_CAPACITY_EQUAL_ZERO        = 2 << 6,
-    STACK_ERROR_CAPACITY_LOWER_DEFAULT     = 2 << 7,
+    STACK_ERROR_PTR_TO_STK_ZERO            = 1 << 1,
+    STACK_ERROR_PTR_TO_DATA_ZERO           = 1 << 2,
+    STACK_ERROR_SIZE_OVER_CAPACITY         = 1 << 3,
+    STACK_ERROR_SIZE_LOWER_ZERO            = 1 << 4,
+    STACK_ERROR_CAPACITY_LOWER_ZERO        = 1 << 5,
+    STACK_ERROR_CAPACITY_EQUAL_ZERO        = 1 << 6,
+    STACK_ERROR_CAPACITY_LOWER_DEFAULT     = 1 << 7,
     
     #if defined(CANARY_PROT)
-        STACK_ERROR_LEFT_CANARY_DIED       = 2 << 8,
-        STACK_ERROR_RIGHT_CANARY_DIED      = 2 << 9,
-        STACK_ERROR_DATA_LEFT_CANARY_DIED  = 2 << 10,
-        STACK_ERROR_DATA_RIGHT_CANARY_DIED = 2 << 11,
+        STACK_ERROR_LEFT_CANARY_DIED       = 1 << 8,
+        STACK_ERROR_RIGHT_CANARY_DIED      = 1 << 9,
+        STACK_ERROR_DATA_LEFT_CANARY_DIED  = 1 << 10,
+        STACK_ERROR_DATA_RIGHT_CANARY_DIED = 1 << 11,
     #endif // CANARY_PROT
     
     #if defined(HASH_PROT)
-        STACK_ERROR_WRONG_HASH             = 2 << 12
+        STACK_ERROR_WRONG_HASH             = 1 << 12
     #endif // HASH_PROT
     
 };
