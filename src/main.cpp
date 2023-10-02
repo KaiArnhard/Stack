@@ -8,9 +8,7 @@ int main() {
     for (size_t i = 0; i < 12; i++) {
         StackPush(&stk, 10);
     }
-    STACK_DUMP(&stk);
     for (size_t i = 0; i < 11; i++) {
-        printf("%d\n", stk.size);
         StackPop(&stk, &ptr);
     }
     

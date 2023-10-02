@@ -37,7 +37,7 @@ struct stack_t {
     size_t         OldCapacity;
 
     #if defined(HASH_PROT)
-        size_t hash;
+        hash_t hash;
     #endif // HASH_PROT
     
 
@@ -46,6 +46,19 @@ struct stack_t {
         canary_t RightCanary = 0xBADC0FFEE;
     #endif //RIGHT_CANARY_PROT
 };
+
+#if defined(HASH_PROT)
+
+    #if defined(CANARY_PROT)
+        const size_t StackSize = 2 * sizeof(canary_t) + sizeof(elem_t*) + 3 * sizeof(size_t) + sizeof(DebugVariables);
+    
+    #else
+        const size_t StackSize = sizeof(elem_t*) + 3 * sizeof(size_t) + sizeof(DebugVariables);
+    
+    #endif // CANARY_PROT
+    
+
+#endif // HASH_PROT
 
 #define STACK_CTOR(stk) {                                                          \
     StackCtor(stk, DefaultSize, #stk, __LINE__, __FILE__, __PRETTY_FUNCTION__);    \
@@ -63,6 +76,12 @@ size_t StackResize(stack_t* stk, bool CodeOfResize);
 void StackDump(stack_t* stk, const char* file, const char* function, size_t line);
 size_t StackVerify(stack_t* stk);
 void ErrorDecoder(size_t* Error);
-bool StackHash(stack_t* stk);
+
+#if defined(HASH_PROT)
+
+hash_t StackHash(char* ptr, size_t lenght);
+bool StackHashCheck(stack_t* stk);
+
+#endif // HASH_PROT
 
 #endif

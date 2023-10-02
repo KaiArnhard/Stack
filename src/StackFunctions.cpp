@@ -1,7 +1,15 @@
+
 #include "../include/stack.h"
 
 void StackCtor (stack_t* stk, size_t capacity, const char* name, const size_t line, const char* file, const char* function) {
     assert(stk);
+
+    size_t size = 0;
+    stk->capacity = capacity;
+    stk->size = 0;
+    stk->OldCapacity = 0;
+    stk->var = {name, line, file, function};
+
     #if defined(CANARY_PROT)
         char* ptr = nullptr;
         ptr = (char* ) calloc(capacity * sizeof(elem_t) + 2 * sizeof(canary_t), sizeof(char));
@@ -16,20 +24,21 @@ void StackCtor (stack_t* stk, size_t capacity, const char* name, const size_t li
             ((canary_t*) (ptr + sizeof(canary_t) + capacity * sizeof(elem_t)))[0] = stk->RightCanary;
         }
         stk->data = (elem_t*) (ptr + sizeof(canary_t));
+        PoisStack(stk);
+        #if defined(HASH_PROT)
+            stk->hash = StackHash((char*) stk, StackSize) + StackHash((char*) stk->data, stk->capacity * sizeof(elem_t));
+        #endif // HASH_PROT
+        
 
     #else
         stk->data = (elem_t*) calloc(capacity, sizeof(elem_t));   
+        PoisStack(stk);
+        #if defined(HASH_PROT)
+            stk->hash = StackHash((char*) stk, StackSize) + StackHash((char*) stk->data, stk->capacity * sizeof(elem_t));
+        #endif // HASH_PROT
+    
     #endif // CANARY_PROT
-    #if defined(HASH_PROT)
-        stk->hash = 0;
-    #endif // HASH_PROT
     
-    stk->capacity = capacity;
-    stk->size = 0;
-    stk->OldCapacity = 0;
-    stk->var = {name, line, file, function};
-    
-    PoisStack(stk);
     STACK_CHECK(stk);
 }
 
@@ -67,6 +76,12 @@ void StackPush(stack_t* stk, const elem_t variable) {
     
     stk->data[stk->size] = variable;
     stk->size++;
+    #if defined(HASH_PROT)
+    
+        stk->hash = StackHash((char*)stk, StackSize) + StackHash((char*) stk->data, sizeof(elem_t) * stk->capacity);
+    
+    #endif // HASH_PROT
+    
     STACK_CHECK(stk);
 }
 
@@ -78,6 +93,11 @@ void StackPop(stack_t* stk, elem_t* ptr) {
     stk->size--;
     *ptr = stk->data[stk->size];
     stk->data[stk->size] = POISON;
+     #if defined(HASH_PROT)
+    
+        stk->hash = StackHash((char*)stk, StackSize) + StackHash((char*) stk->data, sizeof(elem_t) * stk->capacity);
+    
+    #endif // HASH_PROT
     STACK_CHECK(stk);
 }
 
@@ -115,7 +135,6 @@ size_t StackResize(stack_t* stk, bool CodeOfResize) {
             assert(ptr);
             stk->data = (elem_t*) ptr;
             stk->capacity = stk->OldCapacity;
-            printf("dbg\n");
             break;
         case UP:
             OldCapacity = stk->capacity;
@@ -123,14 +142,17 @@ size_t StackResize(stack_t* stk, bool CodeOfResize) {
             ptr = (char*) realloc(stk->data, sizeof(elem_t) * stk->capacity);
             assert(ptr);
             stk->data = (elem_t*) ptr;
-            printf("dbg\n");
+            PoisStack(stk);
             break;
         default:
-            printf("dbg\n");
             abort();
             break;
         }
     #endif // CANARY_PROT
+
+    #if defined(HASH_PROT)
+        stk->hash = StackHash((char*)stk, StackSize) + StackHash((char*) stk->data, sizeof(elem_t) * stk->capacity);
+    #endif // HASH_PROT
     
     STACK_CHECK(stk);
     return OldCapacity;
@@ -149,11 +171,12 @@ void StackDump(stack_t* stk, const char* file, const char* function, size_t line
     fprintf(PointerToDump, "Called from %s(%d), %s\n", file, line, function);
     fprintf(PointerToDump, "Error numbers \n");
     size_t Error[11] = {};
-    #if defined(HASH_PROT)
-        fprintf(PointerToDump, "Stack hash %d\n", stk->hash);
-    #endif // HASH_PROT
-    
     ErrorDecoder(Error);
+    
+    #if defined(HASH_PROT)
+        fprintf(PointerToDump, "Stack hash %lld\n", stk->hash);
+    #endif // HASH_PROT
+
     fprintf(PointerToDump, "size = %d, capacity = %d \n", stk->size, stk->capacity);
     fprintf(PointerToDump, "data [%p] \n", stk->data);
 
@@ -220,7 +243,8 @@ size_t StackVerify(stack_t* stk) {
     #endif // CANARY_PROT
     
     #if defined(HASH_PROT)
-        if (StackHash(stk)) {
+        if (!StackHashCheck(stk)) {
+            printf("dbg\n");
             MyErrorno |= STACK_ERROR_WRONG_HASH;
         }
         
@@ -310,7 +334,39 @@ void PrintOfData(stack_t* stk, FILE* fp) {
     }
 }
 
-bool StackHash(stack_t* stk) {
+#if defined(HASH_PROT)
 
-    return false;
+    hash_t StackHash(char* ptr, size_t length) {
+    hash_t hash = 0;
+
+    for (size_t count = 0; count < (length - (length % 4)); count += 4) {
+        for (size_t counter = 0; counter < 4; counter++) {
+            ((char*) &hash)[counter] |= ptr[count + counter];
+        }
+    }
+    for (int count = (length - 1 - (length % 4)); count >= 0; count -= 4) {
+        for (int counter = 3; counter < 8; counter++) {
+            ((char*) &hash)[counter] |= ptr[count - counter];
+        }
+    }
+    
+    return hash;
 }
+
+    bool StackHashCheck(stack_t *stk) {
+        hash_t hash = stk->hash;
+        stk->hash = 0;
+        size_t size = 0;
+        
+        stk->hash = StackHash((char*) stk, StackSize) + StackHash((char*) stk->data, stk->capacity * sizeof(elem_t));
+        
+        printf("Stack hash stk.hash %lld, counted hash %lld\n", stk->hash, hash);
+        if (hash == stk->hash) {
+            return true;
+        }
+        
+        return false;
+    }
+
+#endif // HASH_PROT
+

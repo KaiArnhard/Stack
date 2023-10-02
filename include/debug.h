@@ -2,6 +2,7 @@
 #define DEBUG_H
     
 typedef unsigned long long canary_t;
+typedef unsigned long long hash_t;
 
 static FILE* PointerToDump = fopen("../StackDump.txt", "w");
 
@@ -38,6 +39,14 @@ static size_t MyErrorno = STACK_NO_ERRORS;
 
 #define STACK_DUMP(stk)                                          \
     StackDump(stk, __FILE__, __PRETTY_FUNCTION__, __LINE__);     \
+
+#if defined(HASH_PROT)
+
+    #define STACK_HASH(stk, length)                              \
+        StackHash((char*) stk, length);                          \
+
+#endif // HASH_PROT
+
 
 #define assert(condition)                                                                                                                                           \
 if(!condition) {                                                                                                                                                    \
