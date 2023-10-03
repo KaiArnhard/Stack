@@ -11,7 +11,9 @@ int main() {
     for (size_t i = 0; i < 5; i++) {
         StackPop(&stk, &ptr);
     }
-    
-    STACK_DUMP(&stk);
+    stk.capacity = -1;
+    stk.size = -1;
+    stk.LeftCanary = 0xBABADED;
+    STACK_CHECK(&stk);
     StackDtor(&stk);
 }

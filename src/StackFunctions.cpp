@@ -162,7 +162,7 @@ void StackDump(stack_t* stk, const char* file, const char* function, size_t line
     #endif // CANARY_PROT
     
     fprintf(PointerToDump, "Called from %s(%d), %s\n", file, line, function);
-    fprintf(PointerToDump, "Error numbers \n");
+    fprintf(PointerToDump, "Error numbers and explanations:\n");
     size_t Error[11] = {};
     ErrorDecoder(Error);
     
@@ -210,7 +210,7 @@ size_t StackVerify(stack_t* stk) {
     }
 
     #if defined(CANARY_PROT)
-    
+        assert(stk->data != nullptr && "Pointer to data is null");
         if (stk->LeftCanary != 0xDED320BED) {
             MyErrorno |= STACK_ERROR_LEFT_CANARY_DIED;
         
@@ -252,12 +252,64 @@ void ErrorDecoder(size_t* Error) {
         if (MyErrorno & (1 << counter)) {
             fprintf(PointerToDump, "%d ", (1 << counter));
             Error[counter] = (1 << counter);
+            ErrToStr(Error[counter]);
         }
         
     }
     
     fprintf(PointerToDump, "\n");    
 
+}
+
+void ErrToStr(size_t error) {
+    switch (error) {
+    case STACK_ERROR_STACK_OVERFLOW:
+        fprintf(PointerToDump, "Stack overflow\n");
+        break;
+    case STACK_ERROR_PTR_TO_STK_ZERO:
+        fprintf(PointerToDump, "Pointer to struct stack is NULL\n");
+        break;
+    case STACK_ERROR_PTR_TO_DATA_ZERO:
+        fprintf(PointerToDump, "Pointer to stack data is NULL\n");
+        break;
+    case STACK_ERROR_SIZE_OVER_CAPACITY:
+        fprintf(PointerToDump, "Size of stack data is over capacity\n");
+        break;
+    case STACK_ERROR_SIZE_LOWER_ZERO:
+        fprintf(PointerToDump, "Size of stack data is lower zero (check number of StackPop())\n");
+        break;
+    case STACK_ERROR_CAPACITY_LOWER_ZERO:
+        fprintf(PointerToDump, "Capacity of stack data is lower zero\n");
+        break;
+    case STACK_ERROR_CAPACITY_EQUAL_ZERO:
+        fprintf(PointerToDump, "Capacity of stack data is equal zero\n");
+        break;
+    case STACK_ERROR_CAPACITY_LOWER_DEFAULT:
+        fprintf(PointerToDump, "Capacity of stack data is lower DefaultCapacity\n");
+        break;
+    #if defined(CANARY_PROT)
+        case STACK_ERROR_LEFT_CANARY_DIED:
+            fprintf(PointerToDump, "Left canary of struct stack died\n");
+            break;
+        case STACK_ERROR_RIGHT_CANARY_DIED:
+            fprintf(PointerToDump, "Right canary of struct stack died\n");
+            break;
+        case STACK_ERROR_DATA_LEFT_CANARY_DIED:
+            fprintf(PointerToDump, "Left canary of stack data died\n");
+            break;
+        case STACK_ERROR_DATA_RIGHT_CANARY_DIED:
+            fprintf(PointerToDump, "Right canary of stack data died\n");
+            break;    
+    #endif // CANARY_PROT
+    #if defined(HASH_PROT)
+        case STACK_ERROR_WRONG_HASH:
+           fprintf(PointerToDump, "Wrong hash\n");
+            break; 
+    #endif // HASH_PROT 
+    default:
+        fprintf(PointerToDump, "There is no errors\n");
+        break;
+    }
 }
 
 void PrintOfData(stack_t* stk, FILE* fp) {

@@ -75,6 +75,7 @@ size_t StackResize(stack_t* stk, Resize_t CodeOfResize);
 void StackDump(stack_t* stk, const char* file, const char* function, size_t line);
 size_t StackVerify(stack_t* stk);
 void ErrorDecoder(size_t* Error);
+void ErrToStr(size_t error);
 
 #if defined(HASH_PROT)
 

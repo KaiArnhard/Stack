@@ -49,7 +49,7 @@ static size_t MyErrorno = STACK_NO_ERRORS;
 #endif // HASH_PROT
 
 
-#define MyAssert(condition)                                                                                                                                           \
+#define MyAssert(condition)                                                                                                                                         \
 if(!condition) {                                                                                                                                                    \
     MyErrorno |= STACK_ERROR_PTR_TO_STK_ZERO;                                                                                                                       \
     fprintf(PointerToDump, "Ptr %p, Error number %d, occurs in FILE %s, on line %d, function %s\n", condition, MyErrorno, __FILE__, __LINE__, __PRETTY_FUNCTION__); \
