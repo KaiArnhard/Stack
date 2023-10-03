@@ -153,7 +153,7 @@ size_t StackResize(stack_t* stk, Resize_t CodeOfResize) {
 
 void StackDump(stack_t* stk, const char* file, const char* function, size_t line) {
     
-    fprintf(PointerToDump, "Stack [%p], %s  from %s line: %d %s \n\n", stk, stk->var.name, stk->var.file, stk->var.line, stk->var.function);
+    fprintf(PointerToDump, "Stack [%p], %s  from %s: %d %s \n\n", stk, stk->var.name, stk->var.file, stk->var.line, stk->var.function);
 
     #if defined(CANARY_PROT)
 

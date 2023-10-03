@@ -12,7 +12,6 @@ int main() {
         StackPop(&stk, &ptr);
     }
     
-    
     STACK_DUMP(&stk);
     StackDtor(&stk);
 }
