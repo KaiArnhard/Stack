@@ -8,9 +8,10 @@ int main() {
     for (size_t i = 0; i < 12; i++) {
         StackPush(&stk, 10);
     }
-    for (size_t i = 0; i < 11; i++) {
+    for (size_t i = 0; i < 5; i++) {
         StackPop(&stk, &ptr);
     }
+    
     
     STACK_DUMP(&stk);
     StackDtor(&stk);

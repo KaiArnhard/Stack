@@ -174,7 +174,7 @@ void StackDump(stack_t* stk, const char* file, const char* function, size_t line
     fprintf(PointerToDump, "data [%p] \n", stk->data);
 
     if (Error[1] || Error[3] || Error[4]) {
-        abort();
+        exit(-1);
     }
     
     if (!Error[4] && !Error[5]) {
@@ -237,70 +237,24 @@ size_t StackVerify(stack_t* stk) {
     
     #if defined(HASH_PROT)
         if (!StackHashCheck(stk)) {
-            printf("dbg\n");
             MyErrorno |= STACK_ERROR_WRONG_HASH;
         }
         
     #endif // HASH_PROT
     
-    MyErrorno |= STACK_ERROR_STACK_OVERFLOW;
     return MyErrorno;
 }
 
 void ErrorDecoder(size_t* Error) {
-    if (MyErrorno & STACK_ERROR_STACK_OVERFLOW) {                  
-        Error[0] = STACK_ERROR_STACK_OVERFLOW;
-        fprintf(PointerToDump, "%d ", Error[0]);
+    size_t count = 13;
     
-    } if (MyErrorno & STACK_ERROR_PTR_TO_DATA_ZERO) {
-        Error[1] = STACK_ERROR_PTR_TO_DATA_ZERO;
-        fprintf(PointerToDump, "%d ", Error[1]);
-    
-    } if (MyErrorno & STACK_ERROR_SIZE_OVER_CAPACITY) {
-        Error[2] = STACK_ERROR_SIZE_OVER_CAPACITY;
-        fprintf(PointerToDump, "%d ", Error[2]);
-    
-    } if (MyErrorno & STACK_ERROR_SIZE_LOWER_ZERO) {
-        Error[3] = STACK_ERROR_SIZE_LOWER_ZERO;
-        fprintf(PointerToDump, "%d ", Error[3]);
-    
-    } if (MyErrorno & STACK_ERROR_CAPACITY_LOWER_ZERO) {
-        Error[4] = STACK_ERROR_CAPACITY_LOWER_ZERO;
-        fprintf(PointerToDump, "%d ", Error[4]); 
-    
-    } if (MyErrorno & STACK_ERROR_CAPACITY_EQUAL_ZERO) {
-        Error[5] = STACK_ERROR_CAPACITY_EQUAL_ZERO;
-        fprintf(PointerToDump, "%d ", Error[5]);
-    
-    } if (MyErrorno & STACK_ERROR_CAPACITY_LOWER_DEFAULT) {
-        Error[6] = STACK_ERROR_CAPACITY_LOWER_DEFAULT;
-        fprintf(PointerToDump, "%d ", Error[6]);
-    }
-
-    #if defined(CANARY_PROT)
-    
-        if (MyErrorno & STACK_ERROR_LEFT_CANARY_DIED) {
-            Error[7] = STACK_ERROR_LEFT_CANARY_DIED;
-            fprintf(PointerToDump, "%d ", Error[7]);
-        } if (MyErrorno & STACK_ERROR_RIGHT_CANARY_DIED) {
-            Error[8] = STACK_ERROR_RIGHT_CANARY_DIED;
-            fprintf(PointerToDump, "%d ", Error[8]);
-        } if (MyErrorno & STACK_ERROR_DATA_LEFT_CANARY_DIED) {
-            Error[9] = STACK_ERROR_DATA_LEFT_CANARY_DIED;
-            fprintf(PointerToDump, "%d ", Error[9]);
-        } if (MyErrorno & STACK_ERROR_DATA_RIGHT_CANARY_DIED) {
-            Error[10] = STACK_ERROR_DATA_RIGHT_CANARY_DIED;
-            fprintf(PointerToDump, "%d ", Error[10]);
-        }
-    #endif // CANARY_PROT
-
-    #if defined(HASH_PROT)
-        if (MyErrorno & STACK_ERROR_WRONG_HASH) {
-            Error[11] = STACK_ERROR_WRONG_HASH;
-            fprintf(PointerToDump, "%d ", Error[11]);
+    for (size_t counter = 0; counter < count; counter++) {
+        if (MyErrorno & (1 << counter)) {
+            fprintf(PointerToDump, "%d ", (1 << counter));
+            Error[counter] = (1 << counter);
         }
         
-    #endif // HASH_PROT
+    }
     
     fprintf(PointerToDump, "\n");    
 
@@ -348,6 +302,10 @@ void PrintOfData(stack_t* stk, FILE* fp) {
     }
 
     bool StackHashCheck(stack_t *stk) {
+        if (MyErrorno & STACK_ERROR_CAPACITY_LOWER_ZERO || MyErrorno & STACK_ERROR_SIZE_LOWER_ZERO) {
+            return false;
+        }
+        
         hash_t hash = stk->hash;
         stk->hash = 0;
         size_t size = 0;
